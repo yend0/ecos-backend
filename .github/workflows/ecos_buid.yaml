@@ -1,4 +1,4 @@
-name: Ecos Build
+name: "Ecos Build"
 
 on:
   workflow_dispatch:
