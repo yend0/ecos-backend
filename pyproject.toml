@@ -12,6 +12,7 @@ dependencies = [
     "asyncpg==0.30.*",
     "fastapi==0.115.*",
     "hatch==1.13.*",
+    "mantelo==2.1.*",
     "sqlalchemy==2.0.*",
     "uvicorn==0.32.*",
 ]
