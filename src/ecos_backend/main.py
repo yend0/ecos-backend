@@ -1,9 +1,10 @@
 import contextlib
-import os
 
 import uvicorn
 
 import fastapi
+
+from ecos_backend.common import settings
 
 
 @contextlib.asynccontextmanager
@@ -14,7 +15,7 @@ async def lifespan(app: fastapi.FastAPI):
 def create_app() -> fastapi.FastAPI:
     title: str = "Ecos REST API"
     description: str = "REST API for Ecos project"
-    version: str = os.getenv("ECOS_API_VERSION", "0.1.0")
+    version: str = settings.api_version
     docs_url: str = "/swagger-ui"
     redoc_url: str = "/redoc"
 
