@@ -1,19 +1,56 @@
-from pydantic import Field
+from dataclasses import dataclass
+
 from pydantic_settings import BaseSettings
 
 
-class Settings(BaseSettings):
-    api_prefix: str = "/api/v1"
+@dataclass(frozen=True)
+class URLPathsConfig:
+    HOMEPAGE: str = "/"
+    API_PREFIX: str = "/api"
+    DOCS_URL: str = "/swagger-ui"
+    REDOC_URL: str = "/redoc"
 
-    api_version: str = Field(validation_alias="WAVEO_API_VERSION")
 
-    database_port: int = Field(validation_alias="DATABASE_PORT")
+@dataclass(frozen=True)
+class URLNamesConfig:
+    HOMEPAGE: str = "homepage"
 
-    postgres_db: str = Field(validation_alias="POSTGRES_DB")
-    postgres_user: str = Field(validation_alias="POSTGRES_USER")
-    postgres_password: str = Field(validation_alias="POSTGRES_PASSWORD")
-    postgres_address: str = Field(validation_alias="POSTGRES_ADDRESS")
+
+class FastAPIConfig(BaseSettings):
+    TITLE: str = "Ecos REST API"
+    DESCRIPTION: str = "REST API for Ecos project"
+    API_VERSION: str
+
+
+class DatabaseConfig(BaseSettings):
+    DATABASE_PORT: int
+
+    POSTGRES_DB: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_ADDRESS: str
 
     @property
     def database_url_asyncpg(self) -> str:
-        return f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@{self.postgres_address}:{self.database_port}/{self.postgres_db}"
+        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_ADDRESS}:{self.DATABASE_PORT}/{self.POSTGRES_DB}"
+
+
+class UvicornConfig(BaseSettings):
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+    LOG_LEVEL: str = "info"
+    RELOAD: bool = True
+    FACTORY: bool = True
+
+
+class KeycloakConfig(BaseSettings):
+    KEYCLOAK_SERVER_URL: str
+    KEYCLOAK_REALM: str
+    KEYCLOAK_CLIENT_ID: str
+    KEYCLOAK_CLIENT_SECRET: str
+
+
+fastAPI_config: FastAPIConfig = FastAPIConfig()
+database_config: DatabaseConfig = DatabaseConfig()
+uvicorn_config: UvicornConfig = UvicornConfig()
+keycloak_config: KeycloakConfig = KeycloakConfig()
