@@ -46,7 +46,13 @@ async def logout(
     await auth_service.logout(credentials.credentials)
 
 
-@router.post("/token/refresh", response_model=TokenResponse)
+@router.post(
+    "/token/refresh",
+    summary="Refresh token",
+    response_description="The token has been refreshed",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+)
 async def refresh_token(
     credentials: typing.Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)],
     auth_service: typing.Annotated[AuthService, Depends(get_auth_service)],
