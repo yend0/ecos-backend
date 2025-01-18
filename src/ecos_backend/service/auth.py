@@ -1,7 +1,7 @@
 from ecos_backend.api.v1.exception import UnauthorizedExcetion
 
 from keycloak import KeycloakOpenID
-from keycloak.exceptions import KeycloakAuthenticationError
+from keycloak.exceptions import KeycloakAuthenticationError, KeycloakPostError
 
 
 class AuthService:
@@ -22,6 +22,8 @@ class AuthService:
             raise UnauthorizedExcetion(
                 detail="Could not logout because of invalid token"
             ) from e
+        except KeycloakPostError as e:
+            raise UnauthorizedExcetion(detail="Invalid refresh token") from e
 
     async def refresh_token(self, refresh_token: str) -> dict[str, str | int]:
         try:
@@ -29,6 +31,8 @@ class AuthService:
             return self._extract_token_data(token)
         except KeycloakAuthenticationError as e:
             raise UnauthorizedExcetion(detail="Could not refresh token") from e
+        except KeycloakPostError as e:
+            raise UnauthorizedExcetion(detail="Invalid refresh token") from e
 
     async def verify_token(self, token: str) -> str:
         try:
