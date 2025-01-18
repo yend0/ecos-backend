@@ -11,7 +11,6 @@ class UserModel(model.AbstractModel):
     id: uuid.UUID
     email: str
     password: str = None
-    first_name: str = None
-    last_name: str = None
+    full_name: str = None
     birth_date: datetime.date = None
     image_url: str = None

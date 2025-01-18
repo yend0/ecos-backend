@@ -36,7 +36,7 @@ class DatabaseConfig(BaseSettings):
 
 
 class UvicornConfig(BaseSettings):
-    HOST: str = "0.0.0.0"
+    HOST: str = "localhost"
     PORT: int = 8000
     LOG_LEVEL: str = "info"
     RELOAD: bool = True
@@ -48,6 +48,9 @@ class KeycloakConfig(BaseSettings):
     KEYCLOAK_REALM: str
     KEYCLOAK_CLIENT_ID: str
     KEYCLOAK_CLIENT_SECRET: str
+    KEYCLOAK_ADMIN_NAME: str
+    KEYCLOAK_ADMIN_PASSWORD: str
+    KEYCLOAK_ADMIN_REALM: str
 
 
 fastAPI_config: FastAPIConfig = FastAPIConfig()

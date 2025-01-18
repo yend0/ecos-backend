@@ -18,7 +18,6 @@ class UserResponseSchema(UserBaseSchema):
     id: uuid.UUID
     birth_date: datetime.date | None = None
     image_url: HttpUrl | None = None
-    first_name: str | None = None
-    last_name: str | None = None
+    full_name: str | None = None
 
     model_config: ConfigDict = ConfigDict(from_attributes=True)
