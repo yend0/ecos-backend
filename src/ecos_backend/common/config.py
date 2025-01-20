@@ -19,7 +19,7 @@ class URLNamesConfig:
 class FastAPIConfig(BaseSettings):
     TITLE: str = "Ecos REST API"
     DESCRIPTION: str = "REST API for Ecos project"
-    API_VERSION: str
+    API_VERSION: str = "0.0.0"
 
 
 class DatabaseConfig(BaseSettings):
@@ -44,13 +44,13 @@ class UvicornConfig(BaseSettings):
 
 
 class KeycloakConfig(BaseSettings):
-    KEYCLOAK_SERVER_URL: str
-    KEYCLOAK_REALM: str
-    KEYCLOAK_CLIENT_ID: str
-    KEYCLOAK_CLIENT_SECRET: str
-    KEYCLOAK_ADMIN_NAME: str
-    KEYCLOAK_ADMIN_PASSWORD: str
-    KEYCLOAK_ADMIN_REALM: str
+    KEYCLOAK_SERVER_URL: str = "http://localhost:8080/auth"
+    KEYCLOAK_REALM: str = "master"
+    KEYCLOAK_CLIENT_ID: str = "admin-cli"
+    KEYCLOAK_CLIENT_SECRET: str = "secret"
+    KEYCLOAK_ADMIN_NAME: str = "admin"
+    KEYCLOAK_ADMIN_PASSWORD: str = "admin"
+    KEYCLOAK_ADMIN_REALM: str = "master"
 
 
 fastAPI_config: FastAPIConfig = FastAPIConfig()
