@@ -12,8 +12,12 @@ dependencies = [
     "asyncpg==0.30.*",
     "fastapi==0.115.*",
     "hatch==1.13.*",
+    "pydantic-settings==2.7.*",
+    "pydantic==2.10.*",
     "sqlalchemy==2.0.*",
     "uvicorn==0.32.*",
+    "python-keycloak==5.1.*",
+    "python-multipart==0.0.*",
 ]
 
 [dependency-groups]
