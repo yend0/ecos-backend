@@ -31,7 +31,7 @@ services:
     restart: unless-stopped
   ecos-app:
     container_name: ecos-app
-    image: ghcr.io/bitchofson/ecos-backend:latest
+    image: ghcr.io/yend0/ecos-backend:latest
     depends_on:
       postgresql-ecos:
         condition: service_healthy
