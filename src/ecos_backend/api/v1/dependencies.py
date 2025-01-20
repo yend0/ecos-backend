@@ -18,9 +18,7 @@ bearer_scheme = HTTPBearer()
 
 
 async def get_uow(
-    session: typing.Annotated[
-        AsyncSession, Depends(dbSQLHelper.scoped_session_dependency)
-    ],
+    session: typing.Annotated[AsyncSession, Depends(dbSQLHelper.session_dependency)],
 ) -> typing.AsyncGenerator[AbstractUnitOfWork, None]:
     async with SQLAlchemyUnitOfWork(session) as uow:
         yield uow
