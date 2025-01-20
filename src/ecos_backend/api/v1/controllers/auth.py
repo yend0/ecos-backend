@@ -1,13 +1,14 @@
 import typing
 
 from fastapi import APIRouter, Depends, status
-from fastapi.security import HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 
 
-from ecos_backend.api.v1.dependencies import get_auth_service, bearer_scheme
+from ecos_backend.api.v1.dependencies import auth_service, credential_schema
 from ecos_backend.api.v1.exception import UnauthorizedExcetion
 from ecos_backend.api.v1.schemas.token import TokenResponse
-from ecos_backend.service.auth import AuthService
+
+request_form = typing.Annotated[OAuth2PasswordRequestForm, Depends()]
 
 router = APIRouter()
 
@@ -20,8 +21,8 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
 )
 async def login(
-    form_data: typing.Annotated[OAuth2PasswordRequestForm, Depends()],
-    auth_service: typing.Annotated[AuthService, Depends(get_auth_service)],
+    form_data: request_form,
+    auth_service: auth_service,
 ) -> typing.Any:
     json_data: dict[str, str | int] = await auth_service.auth(
         form_data.username, form_data.password
@@ -40,8 +41,8 @@ async def login(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def logout(
-    credentials: typing.Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)],
-    auth_service: typing.Annotated[AuthService, Depends(get_auth_service)],
+    credentials: credential_schema,
+    auth_service: auth_service,
 ) -> None:
     await auth_service.logout(credentials.credentials)
 
@@ -54,8 +55,8 @@ async def logout(
     status_code=status.HTTP_200_OK,
 )
 async def refresh_token(
-    credentials: typing.Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)],
-    auth_service: typing.Annotated[AuthService, Depends(get_auth_service)],
+    credentials: credential_schema,
+    auth_service: auth_service,
 ) -> TokenResponse:
     json_data: dict[str, str | int] = await auth_service.refresh_token(
         credentials.credentials

@@ -47,3 +47,12 @@ class UserService:
         async with self._uow:
             user: typing.Optional[UserModel] = await self._uow.user.get_by_id(id=id)
             return user
+
+    async def update_account_information(
+        self,
+        user: UserModel,
+    ) -> UserModel:
+        async with self._uow:
+            await self._uow.user.add(user)
+            await self._uow.commit()
+            return user
