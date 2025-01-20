@@ -27,17 +27,19 @@ class UserService:
                     }
                 )
 
+                new_user = await self._admin.a_get_user(user_id=user_id)
+                user = UserModel(id=uuid.UUID(new_user["id"]), email=new_user["email"])
+                await self._uow.user.add(user)
+                await self._uow.commit()
+                return user
+
             except KeycloakPostError as e:
                 raise ConflictException(
                     detail="User exists with the same email address or the email address is incorrect"
                 ) from e
-
-            new_user = await self._admin.a_get_user(user_id=user_id)
-
-            user = UserModel(id=uuid.UUID(new_user["id"]), email=new_user["email"])
-            await self._uow.user.add(user)
-            await self._uow.commit()
-            return user
+            except Exception as e:
+                await self._admin.a_delete_user(user_id=user_id)
+                raise e
 
     async def get_account_information(
         self, id: uuid.UUID
