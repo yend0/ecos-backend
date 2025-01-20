@@ -23,7 +23,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/register",
+    "/sign-up",
     summary="Register user",
     response_description="User created successfully",
     response_model=UserResponseSchema,

@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/login",
+    "/sign-in",
     summary="Login user",
     response_description="The user has successfully logged in",
     response_model=TokenResponse,
@@ -34,7 +34,7 @@ async def login(
 
 
 @router.post(
-    "/logout",
+    "/sign-out",
     summary="Logout user",
     response_description="The user has successfully logged out",
     status_code=status.HTTP_204_NO_CONTENT,
