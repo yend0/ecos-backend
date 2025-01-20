@@ -112,3 +112,21 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+  alembic-migrations:
+    image: alembic-migrations:latest
+    container_name: alembic-migrations
+    depends_on:
+      postgresql-ecos:
+        condition: service_healthy
+    networks:
+      - backend-ecos
+    volumes:
+      - ../migrations:/migrations
+      - ../../src/ecos_backend:/ecos_backend
+    environment:
+        DATABASE_PORT: ${DATABASE_PORT}
+        POSTGRES_DB: ${POSTGRES_DB}
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        POSTGRES_ADDRESS: ${POSTGRES_ADDRESS}
+    command: ["upgrade", "head"]
