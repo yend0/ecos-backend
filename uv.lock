@@ -235,7 +235,6 @@ name = "ecos-backend"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "alembic" },
     { name = "asyncpg" },
     { name = "fastapi" },
     { name = "hatch" },
@@ -249,6 +248,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "alembic" },
     { name = "pre-commit" },
     { name = "pytest" },
 ]
@@ -258,7 +258,6 @@ lint = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alembic", specifier = "==1.13.*" },
     { name = "asyncpg", specifier = "==0.30.*" },
     { name = "fastapi", specifier = "==0.115.*" },
     { name = "hatch", specifier = "==1.13.*" },
@@ -272,6 +271,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "alembic", specifier = "==1.13.*" },
     { name = "pre-commit", specifier = "==4.0.*" },
     { name = "pytest", specifier = "==8.3.*" },
 ]
