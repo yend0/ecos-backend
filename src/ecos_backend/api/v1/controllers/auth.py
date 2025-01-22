@@ -1,14 +1,9 @@
 import typing
 
-from fastapi import APIRouter, Depends, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, status
 
-
-from ecos_backend.api.v1.dependencies import auth_service, credential_schema
-from ecos_backend.api.v1.exception import UnauthorizedExcetion
+from ecos_backend.api.v1 import annotations
 from ecos_backend.api.v1.schemas.token import TokenResponse
-
-request_form = typing.Annotated[OAuth2PasswordRequestForm, Depends()]
 
 router = APIRouter()
 
@@ -21,15 +16,12 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
 )
 async def login(
-    form_data: request_form,
-    auth_service: auth_service,
+    form_data: annotations.request_form,
+    auth_service: annotations.auth_service,
 ) -> typing.Any:
     json_data: dict[str, str | int] = await auth_service.auth(
         form_data.username, form_data.password
     )
-
-    if not json_data:
-        raise UnauthorizedExcetion(detail="Invalid username or password")
 
     return TokenResponse(**json_data)
 
@@ -41,8 +33,8 @@ async def login(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def logout(
-    credentials: credential_schema,
-    auth_service: auth_service,
+    credentials: annotations.credential_schema,
+    auth_service: annotations.auth_service,
 ) -> None:
     await auth_service.logout(credentials.credentials)
 
@@ -55,14 +47,11 @@ async def logout(
     status_code=status.HTTP_200_OK,
 )
 async def refresh_token(
-    credentials: credential_schema,
-    auth_service: auth_service,
+    credentials: annotations.credential_schema,
+    auth_service: annotations.auth_service,
 ) -> TokenResponse:
     json_data: dict[str, str | int] = await auth_service.refresh_token(
         credentials.credentials
     )
-
-    if not json_data:
-        raise UnauthorizedExcetion(detail="Could not refresh token")
 
     return TokenResponse(**json_data)
