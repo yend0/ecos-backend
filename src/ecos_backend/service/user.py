@@ -1,7 +1,7 @@
 import uuid
 import typing
 
-from ecos_backend.api.v1.exception import ConflictException
+from ecos_backend.common.exception import ConflictException
 from ecos_backend.common.unit_of_work import AbstractUnitOfWork
 from ecos_backend.domain.user import UserModel
 

@@ -1,4 +1,4 @@
-from ecos_backend.api.v1.exception import UnauthorizedExcetion
+from ecos_backend.common.exception import UnauthorizedExcetion
 
 from keycloak import KeycloakOpenID
 from keycloak.exceptions import KeycloakAuthenticationError, KeycloakPostError
