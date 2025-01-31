@@ -33,6 +33,11 @@ class ConflictException(HTTPException):
         super(ConflictException, self).__init__(status_code=409, detail=detail)
 
 
+class PayloadTooLargeException(HTTPException):
+    def __init__(self, detail: str) -> None:
+        super(PayloadTooLargeException, self).__init__(status_code=413, detail=detail)
+
+
 class InternalServerException(HTTPException):
     def __init__(self, detail: str) -> None:
         super(InternalServerException, self).__init__(status_code=500, detail=detail)
