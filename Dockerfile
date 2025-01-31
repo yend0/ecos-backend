@@ -21,6 +21,7 @@ apt-get update --quiet
 apt-get install --quiet --no-install-recommends --assume-yes \
   build-essential \
   libpq-dev \
+  libmagic-dev \
   "python$python_version-dev"
 EOF
 
@@ -119,6 +120,7 @@ RUN <<EOF
 apt-get update --quiet
 apt-get install --quiet --no-install-recommends --assume-yes \
   libpq5 \
+  libmagic1 \
   "python$python_version"
 rm -rf /var/lib/apt/lists/*
 EOF
