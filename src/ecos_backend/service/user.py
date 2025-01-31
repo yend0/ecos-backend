@@ -4,14 +4,21 @@ import typing
 from ecos_backend.common.exception import ConflictException
 from ecos_backend.common.unit_of_work import AbstractUnitOfWork
 from ecos_backend.domain.user import UserModel
+from ecos_backend.db.s3_storage import Boto3DAO
 
 from keycloak import KeycloakAdmin, KeycloakPostError
 
 
 class UserService:
-    def __init__(self, uow: AbstractUnitOfWork, admin: KeycloakAdmin) -> None:
+    def __init__(
+        self,
+        uow: AbstractUnitOfWork,
+        admin: KeycloakAdmin,
+        s3_storage: Boto3DAO,
+    ) -> None:
         self._uow: AbstractUnitOfWork = uow
         self._admin: KeycloakAdmin = admin
+        self._s3_storage: Boto3DAO = s3_storage
 
     async def register_user(self, username: str, password: str) -> UserModel:
         async with self._uow:
@@ -51,8 +58,22 @@ class UserService:
     async def update_account_information(
         self,
         user: UserModel,
+        file: bytes,
+        file_extention: str,
     ) -> UserModel:
         async with self._uow:
+            if file_extention is not None:
+                try:
+                    url = self._s3_storage.upload_object(
+                        f"{str(user.id)}/image/{file_extention}",
+                        str(f"{uuid.uuid4()}.{file_extention}"),
+                        file,
+                    )
+                    clean_url = url.split("?")[0]
+                    setattr(user, "image_url", clean_url)
+                except Exception as e:
+                    raise e
+
             await self._uow.user.add(user)
             await self._uow.commit()
             return user

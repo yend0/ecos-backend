@@ -10,7 +10,7 @@ from fastapi import APIRouter, Request, status
 from starlette.requests import ClientDisconnect
 
 from streaming_form_data import StreamingFormDataParser
-from streaming_form_data.targets import FileTarget, ValueTarget
+from streaming_form_data.targets import ValueTarget
 from streaming_form_data.validators import MaxSizeValidator, ValidationError
 
 from keycloak.exceptions import KeycloakAuthenticationError
@@ -18,7 +18,7 @@ from keycloak.exceptions import KeycloakAuthenticationError
 
 from ecos_backend.domain import user as user_models
 from ecos_backend.common import exception as custom_exceptions
-from ecos_backend.common.validation import MaxBodySizeValidator, MaxBodySizeException
+from ecos_backend.common import validation
 
 from ecos_backend.api.v1 import annotations
 from ecos_backend.api.v1.schemas import user as user_schemas
@@ -91,7 +91,7 @@ async def update_user(
     sid: str = await auth_service.verify_token(credentials.credentials)
 
     try:
-        data, file_ = await parse_request(request)
+        data, file_bytes, file_extention = await parse_request(request)
 
         if data:
             user_update_data: user_schemas.UserRequestUpdatePartialSchema = (
@@ -100,7 +100,9 @@ async def update_user(
             user: user_models.UserModel = await fetch_user(sid, user_service)
             user = update_user_model(user, user_update_data)
             updated_user: user_models.UserModel = (
-                await user_service.update_account_information(user=user)
+                await user_service.update_account_information(
+                    user=user, file=file_bytes, file_extention=file_extention
+                )
             )
 
             return user_schemas.UserResponseSchema(
@@ -122,12 +124,14 @@ async def update_user(
             )
     except ClientDisconnect:
         pass
-    except MaxBodySizeException as e:
+    except validation.MaxBodySizeException as e:
         raise custom_exceptions.PayloadTooLargeException(
             detail=f"Maximum request body size limit ({MAX_REQUEST_BODY_SIZE} bytes) exceeded ({e.body_len} bytes read)"
         )
     except ValidationError as e:
-        raise custom_exceptions.ValidationException(detail=f"SYKA: {str(e)}")
+        raise custom_exceptions.ValidationException(detail=f"{str(e)}")
+    except validation.InvalidFileTypeException as e:
+        raise custom_exceptions.ValidationException(detail=f"{str(e)}")
     except Exception as e:
         raise custom_exceptions.InternalServerException(
             detail=f"There was an error uploading the file {e}"
@@ -136,18 +140,17 @@ async def update_user(
 
 async def parse_request(
     request: Request,
-) -> typing.Tuple[typing.Optional[dict], typing.Optional[FileTarget]]:
-    body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
+) -> tuple[dict | None, bytes | None, str | None]:
+    body_validator = validation.MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
     data = ValueTarget()
     filename = request.headers.get("filename")
     parser = StreamingFormDataParser(headers=request.headers)
 
-    file_ = None
+    file_target = None
     if filename:
         filename: str = unquote(filename)
-        filepath: str = os.path.join("./", os.path.basename(filename))
-        file_ = FileTarget(filepath, validator=MaxSizeValidator(MAX_FILE_SIZE))
-        parser.register("file", file_)
+        file_target = validation.BytesTarget(validator=MaxSizeValidator(MAX_FILE_SIZE))
+        parser.register("file", file_target)
 
     parser.register("data", data)
 
@@ -156,7 +159,17 @@ async def parse_request(
         parser.data_received(chunk)
 
     data_dict: os.Any | None = json.loads(data.value.decode()) if data.value else None
-    return data_dict, file_
+    file_bytes: bytes | None = file_target.content if file_target else None
+
+    if file_bytes:
+        try:
+            file_extension: str = validation.FileTypeValidator.validate(
+                file_bytes
+            ).lstrip(".")
+        except validation.InvalidFileTypeException as e:
+            raise custom_exceptions.ValidationException(detail=str(e))
+
+    return data_dict, file_bytes, file_extension
 
 
 def parse_update_data(data: dict) -> user_schemas.UserRequestUpdatePartialSchema:
