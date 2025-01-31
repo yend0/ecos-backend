@@ -53,7 +53,15 @@ class KeycloakConfig(BaseSettings):
     KEYCLOAK_ADMIN_REALM: str = "master"
 
 
+class S3Config(BaseSettings):
+    BUCKET_NAME: str
+    ENDPOINT: str
+    ACCESS_KEY: str
+    SECRET_KEY: str
+
+
 fastAPI_config: FastAPIConfig = FastAPIConfig()
 database_config: DatabaseConfig = DatabaseConfig()
 uvicorn_config: UvicornConfig = UvicornConfig()
 keycloak_config: KeycloakConfig = KeycloakConfig()
+s3_config: S3Config = S3Config()
