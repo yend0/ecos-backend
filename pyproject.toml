@@ -8,16 +8,23 @@ description = "Back-end application for ecos project."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "alembic==1.13.*",
     "asyncpg==0.30.*",
     "fastapi==0.115.*",
     "hatch==1.13.*",
+    "pydantic-settings==2.7.*",
+    "pydantic==2.10.*",
     "sqlalchemy==2.0.*",
     "uvicorn==0.32.*",
+    "python-keycloak==5.1.*",
+    "python-multipart==0.0.*",
+    "streaming-form-data==1.19.*",
+    "boto3==1.36.*",
+    "python-magic==0.4.*",
 ]
 
 [dependency-groups]
 dev = [
+    "alembic==1.13.*",
     "pytest==8.3.*",
     "pre-commit==4.0.*",
 ]

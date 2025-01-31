@@ -139,8 +139,6 @@ COPY docker-entrypoint.sh /
 
 RUN chmod +x /docker-entrypoint.sh
 
-COPY --chown=$user_id:$group_id /etc /app/etc
-
 # Copy the virtual environment directory from the previous step.
 COPY --link --chown=$user_id:$group_id --from=build /app /app
 
