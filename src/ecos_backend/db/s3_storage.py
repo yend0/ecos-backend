@@ -11,11 +11,13 @@ from ecos_backend.common import config
 class Boto3DAO:
     def __init__(
         self,
+        domain: str,
         bucket_name: str,
         endpoint: str,
         access_key: str,
         secret_key: str,
     ) -> None:
+        self._domain: str = domain
         self._bucket_name: str = bucket_name
         self._endpoint: str = endpoint
         self._access_key: str = access_key
@@ -54,7 +56,7 @@ class Boto3DAO:
             },
             ExpiresIn=3600,
         )
-        return url
+        return url.replace("minio", self._domain)
 
     def get_objects(self, prefix: str) -> list[str]:
         client = self._create_s3_client()
@@ -83,6 +85,7 @@ class Boto3DAO:
 
 def s3_bucket_factory(config: config.S3Config) -> Boto3DAO:
     return Boto3DAO(
+        domain=config.S3_DOMAIN,
         bucket_name=config.BUCKET_NAME,
         endpoint=config.ENDPOINT,
         access_key=config.ACCESS_KEY,
