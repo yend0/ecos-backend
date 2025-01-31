@@ -54,6 +54,7 @@ class KeycloakConfig(BaseSettings):
 
 
 class S3Config(BaseSettings):
+    S3_DOMAIN: str = "localhost"
     BUCKET_NAME: str
     ENDPOINT: str
     ACCESS_KEY: str
