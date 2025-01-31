@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 
-class DataBaseSQLHelper:
+class Database:
     def __init__(self, url: str, echo: bool = False) -> None:
         self._engine: AsyncEngine = create_async_engine(
             url=url,
@@ -27,7 +27,8 @@ class DataBaseSQLHelper:
             await session.close()
 
 
-dbSQLHelper: DataBaseSQLHelper = DataBaseSQLHelper(
-    url=config.database_config.database_url_asyncpg,
-    echo=True,
-)
+def database_factory(config: config.DatabaseConfig) -> Database:
+    return Database(
+        url=config.database_url_asyncpg,
+        echo=True,
+    )
