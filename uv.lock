@@ -72,6 +72,34 @@ wheels = [
 ]
 
 [[package]]
+name = "boto3"
+version = "1.36.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "botocore" },
+    { name = "jmespath" },
+    { name = "s3transfer" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/16/af/e41306c8fe705f19436b5339b23edcc6c4388b548c79fdd21cc120f61899/boto3-1.36.10.tar.gz", hash = "sha256:d2f1010db699326b26fbd465d91c4b49177c9d995d7e72c0f31335f139efa0d2", size = 111006 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/34/3b/7a169cf550531dd89aa702a38313185af30aef685f058cf6f56e840d2eb4/boto3-1.36.10-py3-none-any.whl", hash = "sha256:5f8d5c2024a2d1411d3d67abb7357ec7d4c6162e3f1c396dc9b79d042cfd0a80", size = 139177 },
+]
+
+[[package]]
+name = "botocore"
+version = "1.36.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jmespath" },
+    { name = "python-dateutil" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/05/da/8d21e15a1366a076c54529059c45c66943c217f1eadea5eb36791274d8d0/botocore-1.36.10.tar.gz", hash = "sha256:d27bb73f0ea81395527a6298ac0a7ea5b2958094169f7cf7d48e3f4e4bc21b65", size = 13495786 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f6/84/b038ec69154135a46267d96eb6ddbebe8e6775f18e1e827700b3e30f4170/botocore-1.36.10-py3-none-any.whl", hash = "sha256:45c8a6e01dc18d44a13ba688f1d60ad562db8154b08c46b412387ea040a741c2", size = 13325134 },
+]
+
+[[package]]
 name = "certifi"
 version = "2024.8.30"
 source = { registry = "https://pypi.org/simple" }
@@ -236,11 +264,13 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "asyncpg" },
+    { name = "boto3" },
     { name = "fastapi" },
     { name = "hatch" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-keycloak" },
+    { name = "python-magic" },
     { name = "python-multipart" },
     { name = "sqlalchemy" },
     { name = "streaming-form-data" },
@@ -260,11 +290,13 @@ lint = [
 [package.metadata]
 requires-dist = [
     { name = "asyncpg", specifier = "==0.30.*" },
+    { name = "boto3", specifier = "==1.36.*" },
     { name = "fastapi", specifier = "==0.115.*" },
     { name = "hatch", specifier = "==1.13.*" },
     { name = "pydantic", specifier = "==2.10.*" },
     { name = "pydantic-settings", specifier = "==2.7.*" },
     { name = "python-keycloak", specifier = "==5.1.*" },
+    { name = "python-magic", specifier = "==0.4.*" },
     { name = "python-multipart", specifier = "==0.0.*" },
     { name = "sqlalchemy", specifier = "==2.0.*" },
     { name = "streaming-form-data", specifier = "==1.19.*" },
@@ -493,6 +525,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d6/f4/154cf374c2daf2020e05c3c6a03c91348d59b23c5366e968feb198306fdf/jeepney-0.8.0.tar.gz", hash = "sha256:5efe48d255973902f6badc3ce55e2aa6c5c3b3bc642059ef3a91247bcfcc5806", size = 106005 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ae/72/2a1e2290f1ab1e06f71f3d0f1646c9e4634e70e1d37491535e19266e8dc9/jeepney-0.8.0-py3-none-any.whl", hash = "sha256:c0a454ad016ca575060802ee4d590dd912e35c122fa04e70306de3d076cce755", size = 48435 },
+]
+
+[[package]]
+name = "jmespath"
+version = "1.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/2a/e867e8531cf3e36b41201936b7fa7ba7b5702dbef42922193f05c8976cd6/jmespath-1.0.1.tar.gz", hash = "sha256:90261b206d6defd58fdd5e85f478bf633a2901798906be2ad389150c5c60edbe", size = 25843 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/31/b4/b9b800c45527aadd64d5b442f9b932b00648617eb5d63d2c7a6587b7cafc/jmespath-1.0.1-py3-none-any.whl", hash = "sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980", size = 20256 },
 ]
 
 [[package]]
@@ -787,6 +828,18 @@ wheels = [
 ]
 
 [[package]]
+name = "python-dateutil"
+version = "2.9.0.post0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892 },
+]
+
+[[package]]
 name = "python-dotenv"
 version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -810,6 +863,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/19/02/af847b03964984ce3ea4ad6c80a26cb95cd100804f27f3b06f397357fabc/python_keycloak-5.1.1.tar.gz", hash = "sha256:406c5ad621c0fc911aacb8665b4eec0aebca7e88546ca6d313ebbe966080604b", size = 64559 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4d/cf/0f7a1a5f2a32ea2a98250f7d25930e7b6955b80e344e90b635b5748fd02d/python_keycloak-5.1.1-py3-none-any.whl", hash = "sha256:0df2ae75c80cc0646dc2a57f353f284edcbde3ca77e15526f403e3b38dfcffca", size = 78348 },
+]
+
+[[package]]
+name = "python-magic"
+version = "0.4.27"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/da/db/0b3e28ac047452d079d375ec6798bf76a036a08182dbb39ed38116a49130/python-magic-0.4.27.tar.gz", hash = "sha256:c1ba14b08e4a5f5c31a302b7721239695b2f0f058d125bd5ce1ee36b9d9d3c3b", size = 14677 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6c/73/9f872cb81fc5c3bb48f7227872c28975f998f3e7c2b1c16e95e6432bbb90/python_magic-0.4.27-py2.py3-none-any.whl", hash = "sha256:c212960ad306f700aa0d01e5d7a325d20548ff97eb9920dcd29513174f0294d3", size = 13840 },
 ]
 
 [[package]]
@@ -922,6 +984,18 @@ wheels = [
 ]
 
 [[package]]
+name = "s3transfer"
+version = "0.11.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "botocore" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/62/45/2323b5928f86fd29f9afdcef4659f68fa73eaa5356912b774227f5cf46b5/s3transfer-0.11.2.tar.gz", hash = "sha256:3b39185cb72f5acc77db1a58b6e25b977f28d20496b6e58d6813d75f464d632f", size = 147885 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1b/ac/e7dc469e49048dc57f62e0c555d2ee3117fa30813d2a1a2962cce3a2a82a/s3transfer-0.11.2-py3-none-any.whl", hash = "sha256:be6ecb39fadd986ef1701097771f87e4d2f821f27f6071c872143884d2950fbc", size = 84151 },
+]
+
+[[package]]
 name = "secretstorage"
 version = "3.3.3"
 source = { registry = "https://pypi.org/simple" }
@@ -941,6 +1015,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/58/15/8b3609fd3830ef7b27b655beb4b4e9c62313a4e8da8c676e142cc210d58e/shellingham-1.5.4.tar.gz", hash = "sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de", size = 10310 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686", size = 9755 },
+]
+
+[[package]]
+name = "six"
+version = "1.17.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050 },
 ]
 
 [[package]]

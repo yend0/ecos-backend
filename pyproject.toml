@@ -18,6 +18,8 @@ dependencies = [
     "python-keycloak==5.1.*",
     "python-multipart==0.0.*",
     "streaming-form-data==1.19.*",
+    "boto3==1.36.*",
+    "python-magic==0.4.*",
 ]
 
 [dependency-groups]
