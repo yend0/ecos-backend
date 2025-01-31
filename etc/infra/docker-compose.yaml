@@ -29,37 +29,41 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
-  ecos-app:
-    container_name: ecos-app
-    image: ghcr.io/yend0/ecos-backend:latest
-    depends_on:
-      postgresql-ecos:
-        condition: service_healthy
-      keycloak:
-        condition: service_healthy
-    ports:
-      - "8000:8000"
-    networks:
-      - backend-ecos
-    environment:
-      API_VERSION: ${API_VERSION}
-      DATABASE_PORT: ${DATABASE_PORT}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_ADDRESS: ${POSTGRES_ADDRESS}
-      HOST: ${HOST}
-      PORT: ${PORT}
-      LOG_LEVEL: ${LOG_LEVEL}
-      RELOAD: ${RELOAD}
-      FACTORY: ${FACTORY}
-      KEYCLOAK_SERVER_URL: ${KEYCLOAK_SERVER_URL}
-      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
-      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
-      KEYCLOAK_ADMIN_NAME: ${KEYCLOAK_ADMIN_NAME}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM}
+  # ecos-app:
+  #   container_name: ecos-app
+  #   image: ghcr.io/yend0/ecos-backend:latest
+  #   depends_on:
+  #     postgresql-ecos:
+  #       condition: service_healthy
+  #     keycloak:
+  #       condition: service_healthy
+  #   ports:
+  #     - "8000:8000"
+  #   networks:
+  #     - backend-ecos
+  #   environment:
+  #     API_VERSION: ${API_VERSION}
+  #     DATABASE_PORT: ${DATABASE_PORT}
+  #     POSTGRES_DB: ${POSTGRES_DB}
+  #     POSTGRES_USER: ${POSTGRES_USER}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     POSTGRES_ADDRESS: ${POSTGRES_ADDRESS}
+  #     HOST: ${HOST}
+  #     PORT: ${PORT}
+  #     LOG_LEVEL: ${LOG_LEVEL}
+  #     RELOAD: ${RELOAD}
+  #     FACTORY: ${FACTORY}
+  #     KEYCLOAK_SERVER_URL: ${KEYCLOAK_SERVER_URL}
+  #     KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+  #     KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+  #     KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+  #     KEYCLOAK_ADMIN_NAME: ${KEYCLOAK_ADMIN_NAME}
+  #     KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+  #     KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM}
+  #     BUCKET_NAME: ${BUCKET_NAME}
+  #     ENDPOINT: ${ENDPOINT}
+  #     ACCESS_KEY: ${ACCESS_KEY}
+  #     SECRET_KEY: ${SECRET_KEY}
   postgresql-keycloak:
     container_name: keycloak-db
     image: postgres:16-alpine
@@ -113,8 +117,8 @@ services:
       timeout: 10s
       retries: 3
   alembic-migrations:
-    image: alembic-migrations:latest
     container_name: alembic-migrations
+    image: alembic-migrations:latest
     depends_on:
       postgresql-ecos:
         condition: service_healthy
@@ -129,4 +133,24 @@ services:
         POSTGRES_USER: ${POSTGRES_USER}
         POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
         POSTGRES_ADDRESS: ${POSTGRES_ADDRESS}
+        BUCKET_NAME: ${BUCKET_NAME}
+        ENDPOINT: ${ENDPOINT}
+        ACCESS_KEY: ${ACCESS_KEY}
+        SECRET_KEY: ${SECRET_KEY}
     command: ["upgrade", "head"]
+  minio:
+    container_name: minio
+    image: minio/minio:latest
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    networks:
+      - backend-ecos
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ADDRESS: ${MINIO_ADDRESS}
+      MINIO_CONSOLE_ADDRESS: ${MINIO_CONSOLE_ADDRESS}
+    command: server /data --console-address :9001
