@@ -1,7 +1,5 @@
-import hashlib
 import os
 import json
-import random
 import typing
 import uuid
 
@@ -14,8 +12,6 @@ from starlette.requests import ClientDisconnect
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.targets import ValueTarget
 from streaming_form_data.validators import MaxSizeValidator, ValidationError
-
-from keycloak.exceptions import KeycloakAuthenticationError
 
 
 from ecos_backend.domain import user as user_models
@@ -45,15 +41,10 @@ async def register_user(
     user_service: annotations.user_service,
     request: Request,
 ) -> typing.Any:
-    token, verification_code = generate_email_verification_data()
-
-    url: str = f"{request.url.scheme}://{request.client.host}:{request.url.port}/api/v1/auth/verify-email/{token.hex()}"
-
     await user_service.register_user(
         username=user.email,
         password=user.password,
-        verification_code=verification_code,
-        url=url,
+        request=request,
     )
 
     return BaseInforamtionResponse(
@@ -84,10 +75,6 @@ async def get_user(
             full_name=user.full_name,
             birth_date=user.birth_date,
             image_url=user.image_url,
-        )
-    except KeycloakAuthenticationError:
-        raise custom_exceptions.UnauthorizedExcetion(
-            detail="Could not validate credentials"
         )
     except Exception as e:
         raise custom_exceptions.InternalServerException(detail=str(e))
@@ -144,7 +131,7 @@ async def update_user(
         pass
     except validation.MaxBodySizeException as e:
         raise custom_exceptions.PayloadTooLargeException(
-            detail=f"Maximum request body size limit ({MAX_REQUEST_BODY_SIZE} bytes) exceeded ({e.body_len} bytes read)"
+            detail=f"Maximum request body size limit ({MAX_REQUEST_BODY_SIZE} bytes) exceeded ({e.body_len} bytes read)."
         )
     except ValidationError as e:
         raise custom_exceptions.ValidationException(detail=f"{str(e)}")
@@ -154,6 +141,53 @@ async def update_user(
         raise custom_exceptions.InternalServerException(
             detail=f"There was an error uploading the file {e}"
         )
+
+
+@router.get(
+    "/verify-email/{token}",
+    summary="Verify email",
+    response_description="The email has been verified",
+    response_model=BaseInforamtionResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def verify_email(
+    token: str,
+    user_service: annotations.user_service,
+) -> typing.Any:
+    result: bool = await user_service.verify_email(token=token)
+
+    if not result:
+        raise custom_exceptions.ForbiddenExcetion(
+            detail="Invalid verification code or account already verified."
+        )
+
+    return BaseInforamtionResponse(
+        status="success",
+        message="Account verified successfully.",
+    )
+
+
+@router.put(
+    "/verify-email",
+    summary="Resend verification email",
+    response_description="Resend verification email",
+    response_model=BaseInforamtionResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def resend_email(
+    credentials: annotations.credential_schema,
+    auth_service: annotations.auth_service,
+    user_service: annotations.user_service,
+    request: Request,
+) -> typing.Any:
+    sid: str = await auth_service.verify_token(credentials.credentials)
+
+    await user_service.resend_verification_email(id=uuid.UUID(sid), request=request)
+
+    return BaseInforamtionResponse(
+        status="success",
+        message="Verification token successfully sent to your email.",
+    )
 
 
 async def parse_request(
@@ -204,7 +238,7 @@ async def fetch_user(
         uuid.UUID(sid)
     )
     if not user:
-        raise custom_exceptions.NotFoundException(detail="User not found")
+        raise custom_exceptions.NotFoundException(detail="User not found.")
     return user
 
 
@@ -215,11 +249,3 @@ def update_user_model(
     for field, value in update_data.model_dump(exclude_unset=True).items():
         setattr(user, field, value)
     return user
-
-
-def generate_email_verification_data():
-    token: bytes = random.randbytes(10)
-    hashedCode: hashlib._Hash = hashlib.sha256()
-    hashedCode.update(token)
-    verification_code: str = hashedCode.hexdigest()
-    return token, verification_code
