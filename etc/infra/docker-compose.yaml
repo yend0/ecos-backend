@@ -66,6 +66,7 @@ services:
       ENDPOINT: ${ENDPOINT}
       ACCESS_KEY: ${ACCESS_KEY}
       SECRET_KEY: ${SECRET_KEY}
+      ECHO: ${ECHO}
   postgresql-keycloak:
     container_name: keycloak-db
     image: postgres:16-alpine
