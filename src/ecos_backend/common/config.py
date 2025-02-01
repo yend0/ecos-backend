@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from pydantic import EmailStr
 from pydantic_settings import BaseSettings
 
 
@@ -62,8 +63,17 @@ class S3Config(BaseSettings):
     SECRET_KEY: str
 
 
+class SMTPConfig(BaseSettings):
+    EMAIL_HOST: str
+    EMAIL_PORT: int
+    EMAIL_USERNAME: str
+    EMAIL_PASSWORD: str
+    EMAIL_FROM: EmailStr
+
+
 fastAPI_config: FastAPIConfig = FastAPIConfig()
 database_config: DatabaseConfig = DatabaseConfig()
 uvicorn_config: UvicornConfig = UvicornConfig()
 keycloak_config: KeycloakConfig = KeycloakConfig()
 s3_config: S3Config = S3Config()
+smtp_config: SMTPConfig = SMTPConfig()
