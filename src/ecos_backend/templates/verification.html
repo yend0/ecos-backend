@@ -1,0 +1,27 @@
+{% extends 'base.html' %} {% block content %}
+
+<p>
+  Спасибо, что создали у нас учетную запись. Пожалуйста, подтвердите свой адрес электронной почты,
+  нажав на кнопку ниже.
+</p>
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
+  <tbody>
+    <tr>
+      <td align="left">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+          <tbody>
+            <tr>
+              <td>
+                <a href="{{url}}" target="_blank">Подтвердить адрес электронной почты</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>С уважением,
+  Команда Ecos!</p>
+
+{% endblock %}

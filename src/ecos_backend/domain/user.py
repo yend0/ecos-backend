@@ -13,3 +13,4 @@ class UserModel(model.AbstractModel):
     full_name: str = None
     birth_date: datetime.date = None
     image_url: str = None
+    verification_code: str = None

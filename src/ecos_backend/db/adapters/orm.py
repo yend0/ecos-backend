@@ -1,4 +1,5 @@
-from sqlalchemy import Table, Column, String, Date, UUID
+from sqlalchemy import Table, Column, String, Date, DateTime, UUID
+from sqlalchemy.sql import func
 
 from ecos_backend.db import mapper_registry
 
@@ -10,6 +11,17 @@ user_table = Table(
     Column("email", String(255), nullable=False, unique=True),
     Column("birth_date", Date, nullable=True),
     Column("image_url", String(255), nullable=True, unique=True),
+    Column("verification_code", String(255), nullable=False),
+    Column(
+        "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
+    Column(
+        "updated_at",
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
 )
 
 

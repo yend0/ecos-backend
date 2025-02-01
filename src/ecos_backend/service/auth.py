@@ -15,9 +15,10 @@ class AuthService:
         except KeycloakAuthenticationError as e:
             raise UnauthorizedExcetion(detail="Invalid username or password") from e
 
-    async def logout(self, token: str) -> None:
+    async def logout(self, token: str) -> bool | None:
         try:
             await self._client.a_logout(refresh_token=token)
+            return True
         except KeycloakAuthenticationError as e:
             raise UnauthorizedExcetion(
                 detail="Could not logout because of invalid token"

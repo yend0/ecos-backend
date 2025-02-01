@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 
+from pydantic import EmailStr
 from pydantic_settings import BaseSettings
+
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 @dataclass(frozen=True)
@@ -29,6 +32,7 @@ class DatabaseConfig(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_ADDRESS: str
+    ECHO: bool = False
 
     @property
     def database_url_asyncpg(self) -> str:
@@ -61,8 +65,22 @@ class S3Config(BaseSettings):
     SECRET_KEY: str
 
 
+class SMTPConfig(BaseSettings):
+    EMAIL_HOST: str
+    EMAIL_PORT: int
+    EMAIL_USERNAME: str
+    EMAIL_PASSWORD: str
+    EMAIL_FROM: EmailStr
+
+
+env_jinja2 = Environment(
+    loader=PackageLoader("ecos_backend", "templates"),
+    autoescape=select_autoescape(["html", "xml"]),
+)
+
 fastAPI_config: FastAPIConfig = FastAPIConfig()
 database_config: DatabaseConfig = DatabaseConfig()
 uvicorn_config: UvicornConfig = UvicornConfig()
 keycloak_config: KeycloakConfig = KeycloakConfig()
 s3_config: S3Config = S3Config()
+smtp_config: SMTPConfig = SMTPConfig()

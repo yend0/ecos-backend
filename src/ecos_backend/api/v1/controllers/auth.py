@@ -3,6 +3,7 @@ import typing
 from fastapi import APIRouter, status
 
 from ecos_backend.api.v1 import annotations
+from ecos_backend.api.v1.schemas.base import BaseInforamtionResponse
 from ecos_backend.api.v1.schemas.token import TokenResponse
 
 router = APIRouter()
@@ -30,13 +31,19 @@ async def login(
     "/sign-out",
     summary="Logout user",
     response_description="The user has successfully logged out",
-    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=BaseInforamtionResponse,
+    status_code=status.HTTP_200_OK,
 )
 async def logout(
     credentials: annotations.credential_schema,
     auth_service: annotations.auth_service,
-) -> None:
+) -> typing.Any:
     await auth_service.logout(credentials.credentials)
+
+    return BaseInforamtionResponse(
+        status="success",
+        message="User logged out successfully.",
+    )
 
 
 @router.post(

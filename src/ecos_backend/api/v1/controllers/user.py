@@ -13,8 +13,6 @@ from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.targets import ValueTarget
 from streaming_form_data.validators import MaxSizeValidator, ValidationError
 
-from keycloak.exceptions import KeycloakAuthenticationError
-
 
 from ecos_backend.domain import user as user_models
 from ecos_backend.common import exception as custom_exceptions
@@ -22,6 +20,7 @@ from ecos_backend.common import validation
 
 from ecos_backend.api.v1 import annotations
 from ecos_backend.api.v1.schemas import user as user_schemas
+from ecos_backend.api.v1.schemas.base import BaseInforamtionResponse
 
 MAX_FILE_SIZE = 1024 * 1024 * 10  # 10MB
 MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 10 + 1024
@@ -34,14 +33,24 @@ router = APIRouter()
     "/sign-up",
     summary="Register user",
     response_description="User created successfully",
-    response_model=user_schemas.UserResponseSchema,
+    response_model=BaseInforamtionResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def register_user(
     user: annotations.user_create_schema,
     user_service: annotations.user_service,
+    request: Request,
 ) -> typing.Any:
-    return await user_service.register_user(username=user.email, password=user.password)
+    await user_service.register_user(
+        username=user.email,
+        password=user.password,
+        request=request,
+    )
+
+    return BaseInforamtionResponse(
+        status="success",
+        message="User created successfully. Verification token successfully sent to your email.",
+    )
 
 
 @router.get(
@@ -66,10 +75,6 @@ async def get_user(
             full_name=user.full_name,
             birth_date=user.birth_date,
             image_url=user.image_url,
-        )
-    except KeycloakAuthenticationError:
-        raise custom_exceptions.UnauthorizedExcetion(
-            detail="Could not validate credentials"
         )
     except Exception as e:
         raise custom_exceptions.InternalServerException(detail=str(e))
@@ -126,7 +131,7 @@ async def update_user(
         pass
     except validation.MaxBodySizeException as e:
         raise custom_exceptions.PayloadTooLargeException(
-            detail=f"Maximum request body size limit ({MAX_REQUEST_BODY_SIZE} bytes) exceeded ({e.body_len} bytes read)"
+            detail=f"Maximum request body size limit ({MAX_REQUEST_BODY_SIZE} bytes) exceeded ({e.body_len} bytes read)."
         )
     except ValidationError as e:
         raise custom_exceptions.ValidationException(detail=f"{str(e)}")
@@ -136,6 +141,53 @@ async def update_user(
         raise custom_exceptions.InternalServerException(
             detail=f"There was an error uploading the file {e}"
         )
+
+
+@router.get(
+    "/verify-email/{token}",
+    summary="Verify email",
+    response_description="The email has been verified",
+    response_model=BaseInforamtionResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def verify_email(
+    token: str,
+    user_service: annotations.user_service,
+) -> typing.Any:
+    result: bool = await user_service.verify_email(token=token)
+
+    if not result:
+        raise custom_exceptions.ForbiddenExcetion(
+            detail="Invalid verification code or account already verified."
+        )
+
+    return BaseInforamtionResponse(
+        status="success",
+        message="Account verified successfully.",
+    )
+
+
+@router.put(
+    "/verify-email",
+    summary="Resend verification email",
+    response_description="Resend verification email",
+    response_model=BaseInforamtionResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def resend_email(
+    credentials: annotations.credential_schema,
+    auth_service: annotations.auth_service,
+    user_service: annotations.user_service,
+    request: Request,
+) -> typing.Any:
+    sid: str = await auth_service.verify_token(credentials.credentials)
+
+    await user_service.resend_verification_email(id=uuid.UUID(sid), request=request)
+
+    return BaseInforamtionResponse(
+        status="success",
+        message="Verification token successfully sent to your email.",
+    )
 
 
 async def parse_request(
@@ -186,7 +238,7 @@ async def fetch_user(
         uuid.UUID(sid)
     )
     if not user:
-        raise custom_exceptions.NotFoundException(detail="User not found")
+        raise custom_exceptions.NotFoundException(detail="User not found.")
     return user
 
 
