@@ -20,6 +20,7 @@ dependencies = [
     "streaming-form-data==1.19.*",
     "boto3==1.36.*",
     "python-magic==0.4.*",
+    "fastapi-mail==1.4.*",
 ]
 
 [dependency-groups]
