@@ -30,5 +30,5 @@ class Database:
 def database_factory(config: config.DatabaseConfig) -> Database:
     return Database(
         url=config.database_url_asyncpg,
-        echo=True,
+        echo=config.ECHO,
     )

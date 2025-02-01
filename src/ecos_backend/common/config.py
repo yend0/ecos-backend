@@ -29,6 +29,7 @@ class DatabaseConfig(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_ADDRESS: str
+    ECHO: bool = False
 
     @property
     def database_url_asyncpg(self) -> str:
