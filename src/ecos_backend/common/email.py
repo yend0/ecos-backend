@@ -1,19 +1,15 @@
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
-from pydantic import BaseModel, EmailStr
+from jinja2 import Template
+from pydantic import EmailStr, HttpUrl
 
 from ecos_backend.common import config
 
 
-class EmailSchema(BaseModel):
-    email: list[EmailStr]
-
-
 class Email:
-    def __init__(self, user: dict, url: str, email: list[EmailStr]) -> None:
-        self.name = user["name"]
-        self.sender: str = "Ecos <ecos@ecos.com>"
-        self.email: list[str] = email
-        self.url: EmailStr = url
+    def __init__(self, url: HttpUrl, email: EmailStr) -> None:
+        self._sender: str = "Ecos <ecos@ecos.com>"
+        self._email: EmailStr = email
+        self._url: HttpUrl = url
 
     async def sendMail(self, subject, template) -> None:
         conf = ConnectionConfig(
@@ -28,10 +24,12 @@ class Email:
             VALIDATE_CERTS=True,
         )
 
+        template: Template = config.env_jinja2.get_template(f"{template}.html")
+
+        html: str = template.render(url=self.url, first_name=self.name, subject=subject)
+
         message = MessageSchema(
-            subject=subject,
-            recipients=self.email,
-            subtype="plain",
+            subject=subject, recipients=self.email, body=html, subtype="html"
         )
 
         fm = FastMail(conf)

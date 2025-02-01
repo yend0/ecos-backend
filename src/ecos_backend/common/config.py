@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from pydantic import EmailStr
 from pydantic_settings import BaseSettings
 
+from jinja2 import Environment, PackageLoader, select_autoescape
+
 
 @dataclass(frozen=True)
 class URLPathsConfig:
@@ -70,6 +72,11 @@ class SMTPConfig(BaseSettings):
     EMAIL_PASSWORD: str
     EMAIL_FROM: EmailStr
 
+
+env_jinja2 = Environment(
+    loader=PackageLoader("ecos_backend", "templates"),
+    autoescape=select_autoescape(["html", "xml"]),
+)
 
 fastAPI_config: FastAPIConfig = FastAPIConfig()
 database_config: DatabaseConfig = DatabaseConfig()
