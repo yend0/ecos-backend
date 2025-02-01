@@ -1,12 +1,17 @@
 import uuid
 import typing
 
-from ecos_backend.common.exception import ConflictException
+from ecos_backend.common.exception import (
+    ConflictException,
+    InternalServerException,
+    NotFoundException,
+)
 from ecos_backend.common.unit_of_work import AbstractUnitOfWork
+from ecos_backend.common.email import Email
 from ecos_backend.domain.user import UserModel
 from ecos_backend.db.s3_storage import Boto3DAO
 
-from keycloak import KeycloakAdmin, KeycloakPostError
+from keycloak import KeycloakAdmin, KeycloakPostError, KeycloakPutError
 
 
 class UserService:
@@ -20,7 +25,13 @@ class UserService:
         self._admin: KeycloakAdmin = admin
         self._s3_storage: Boto3DAO = s3_storage
 
-    async def register_user(self, username: str, password: str) -> UserModel:
+    async def register_user(
+        self,
+        username: str,
+        password: str,
+        verification_code: str,
+        url: str,
+    ) -> UserModel:
         async with self._uow:
             try:
                 user_id: str = await self._admin.a_create_user(
@@ -35,7 +46,13 @@ class UserService:
                 )
 
                 new_user = await self._admin.a_get_user(user_id=user_id)
+
                 user = UserModel(id=uuid.UUID(new_user["id"]), email=new_user["email"])
+
+                setattr(user, "verification_code", verification_code)
+
+                await Email(url=url, email=[user.email]).sendVerificationCode()
+
                 await self._uow.user.add(user)
                 await self._uow.commit()
                 return user
@@ -54,6 +71,28 @@ class UserService:
         async with self._uow:
             user: typing.Optional[UserModel] = await self._uow.user.get_by_id(id=id)
             return user
+
+    async def verify_email(self, verification_code: str) -> bool:
+        async with self._uow:
+            user: typing.Optional[
+                UserModel
+            ] = await self._uow.user.get_by_verification_code(
+                verification_code=verification_code
+            )
+
+            if not user:
+                raise NotFoundException(detail="User not found")
+
+            try:
+                await self._admin.a_update_user(
+                    user.id,
+                    {
+                        "emailVerified": True,
+                    },
+                )
+            except KeycloakPutError as e:
+                raise InternalServerException(detail="Failed to verify email") from e
+            return True
 
     async def update_account_information(
         self,

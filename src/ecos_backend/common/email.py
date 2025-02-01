@@ -6,9 +6,9 @@ from ecos_backend.common import config
 
 
 class Email:
-    def __init__(self, url: HttpUrl, email: EmailStr) -> None:
+    def __init__(self, url: HttpUrl, email: list[EmailStr]) -> None:
         self._sender: str = "Ecos <ecos@ecos.com>"
-        self._email: EmailStr = email
+        self._email: list[EmailStr] = email
         self._url: HttpUrl = url
 
     async def sendMail(self, subject, template) -> None:
@@ -26,10 +26,10 @@ class Email:
 
         template: Template = config.env_jinja2.get_template(f"{template}.html")
 
-        html: str = template.render(url=self.url, first_name=self.name, subject=subject)
+        html: str = template.render(url=self._url, subject=subject)
 
         message = MessageSchema(
-            subject=subject, recipients=self.email, body=html, subtype="html"
+            subject=subject, recipients=self._email, body=html, subtype="html"
         )
 
         fm = FastMail(conf)

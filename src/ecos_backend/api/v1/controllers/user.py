@@ -1,5 +1,7 @@
+import hashlib
 import os
 import json
+import random
 import typing
 import uuid
 
@@ -22,6 +24,7 @@ from ecos_backend.common import validation
 
 from ecos_backend.api.v1 import annotations
 from ecos_backend.api.v1.schemas import user as user_schemas
+from ecos_backend.api.v1.schemas.base import BaseInforamtionResponse
 
 MAX_FILE_SIZE = 1024 * 1024 * 10  # 10MB
 MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 10 + 1024
@@ -34,14 +37,29 @@ router = APIRouter()
     "/sign-up",
     summary="Register user",
     response_description="User created successfully",
-    response_model=user_schemas.UserResponseSchema,
+    response_model=BaseInforamtionResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def register_user(
     user: annotations.user_create_schema,
     user_service: annotations.user_service,
+    request: Request,
 ) -> typing.Any:
-    return await user_service.register_user(username=user.email, password=user.password)
+    token, verification_code = generate_email_verification_data()
+
+    url: str = f"{request.url.scheme}://{request.client.host}:{request.url.port}/api/v1/auth/verify-email/{token.hex()}"
+
+    await user_service.register_user(
+        username=user.email,
+        password=user.password,
+        verification_code=verification_code,
+        url=url,
+    )
+
+    return BaseInforamtionResponse(
+        status="success",
+        message="User created successfully. Verification token successfully sent to your email.",
+    )
 
 
 @router.get(
@@ -197,3 +215,11 @@ def update_user_model(
     for field, value in update_data.model_dump(exclude_unset=True).items():
         setattr(user, field, value)
     return user
+
+
+def generate_email_verification_data():
+    token: bytes = random.randbytes(10)
+    hashedCode: hashlib._Hash = hashlib.sha256()
+    hashedCode.update(token)
+    verification_code: str = hashedCode.hexdigest()
+    return token, verification_code
