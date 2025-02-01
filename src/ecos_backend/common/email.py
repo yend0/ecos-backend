@@ -36,4 +36,4 @@ class Email:
         await fm.send_message(message)
 
     async def sendVerificationCode(self) -> None:
-        await self.sendMail("Your verification code (Valid for 10min)", "verification")
+        await self.sendMail("Your verification code", "verification")
