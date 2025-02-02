@@ -1,11 +1,13 @@
 import typing
 
-from fastapi import Depends
+from fastapi import Depends, Security
 
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from keycloak import KeycloakOpenID, KeycloakAdmin
+from keycloak import KeycloakAdmin
 
+from ecos_backend.common.exception import ForbiddenExcetion, UnauthorizedExcetion
 from ecos_backend.db import s3_storage
 from ecos_backend.db import database
 from ecos_backend.common import config
@@ -16,7 +18,8 @@ from ecos_backend.common.keycloak_adapters import (
 )
 from ecos_backend.common.unit_of_work import SQLAlchemyUnitOfWork, AbstractUnitOfWork
 from ecos_backend.service.user import UserService
-from ecos_backend.service.auth import AuthService
+
+bearer_scheme = HTTPBearer()
 
 admin_adapter = KeycloakAdminAdapter()
 client_adapter = KeycloakClientAdapter()
@@ -43,7 +46,17 @@ async def get_user_service(
     return UserService(uow=uow, admin=admin, s3_storage=s3)
 
 
-async def get_auth_service(
-    keycloak_openid: typing.Annotated[KeycloakOpenID, Depends(client_adapter)],
-) -> AuthService:
-    return AuthService(client=keycloak_openid)
+async def verify_token(
+    credentials: typing.Annotated[
+        HTTPAuthorizationCredentials, Security(bearer_scheme)
+    ],
+):
+    token: str = credentials.credentials
+    try:
+        user_info = await client_adapter.openid.a_userinfo(token)
+        if not user_info or "sub" not in user_info:
+            raise UnauthorizedExcetion(detail="Invalid token")
+        return user_info
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise ForbiddenExcetion(detail="Invalid or expired token")

@@ -33,7 +33,6 @@ class KeycloakClientAdapter:
             server_url=keycloak_config.KEYCLOAK_SERVER_URL,
             realm_name=keycloak_config.KEYCLOAK_REALM,
             client_id=keycloak_config.KEYCLOAK_CLIENT_ID,
-            client_secret_key=keycloak_config.KEYCLOAK_CLIENT_SECRET,
         )
 
     @property

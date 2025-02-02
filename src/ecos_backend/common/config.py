@@ -59,18 +59,18 @@ class KeycloakConfig(BaseSettings):
 
 class S3Config(BaseSettings):
     S3_DOMAIN: str = "localhost"
-    BUCKET_NAME: str
-    ENDPOINT: str
-    ACCESS_KEY: str
-    SECRET_KEY: str
+    BUCKET_NAME: str = "defaulrt_bucket"
+    ENDPOINT: str = "http://localhost:9000"
+    ACCESS_KEY: str = "admin"
+    SECRET_KEY: str = "admin"
 
 
 class SMTPConfig(BaseSettings):
-    EMAIL_HOST: str
-    EMAIL_PORT: int
-    EMAIL_USERNAME: str
-    EMAIL_PASSWORD: str
-    EMAIL_FROM: EmailStr
+    EMAIL_HOST: str = "localhost"
+    EMAIL_PORT: int = 587
+    EMAIL_USERNAME: str = "admin"
+    EMAIL_PASSWORD: str = "admin"
+    EMAIL_FROM: EmailStr = "admin@localhost"
 
 
 env_jinja2 = Environment(
