@@ -61,14 +61,13 @@ async def register_user(
     status_code=status.HTTP_200_OK,
 )
 async def get_user(
-    credentials: annotations.credential_schema,
-    auth_service: annotations.auth_service,
     user_service: annotations.user_service,
+    user_info: annotations.verify_token,
 ) -> typing.Any:
-    sid: str = await auth_service.verify_token(credentials.credentials)
+    sub = user_info["sub"]
 
     try:
-        user: user_models.UserModel = await fetch_user(sid, user_service)
+        user: user_models.UserModel = await fetch_user(sub, user_service)
         return user_schemas.UserResponseSchema(
             id=user.id,
             email=user.email,
@@ -88,12 +87,11 @@ async def get_user(
     status_code=status.HTTP_200_OK,
 )
 async def update_user(
-    credentials: annotations.credential_schema,
-    auth_service: annotations.auth_service,
     user_service: annotations.user_service,
+    user_info: annotations.verify_token,
     request: Request,
 ) -> typing.Any:
-    sid: str = await auth_service.verify_token(credentials.credentials)
+    sub = user_info["sub"]
 
     try:
         data, file_bytes, file_extention = await parse_request(request)
@@ -102,7 +100,7 @@ async def update_user(
             user_update_data: user_schemas.UserRequestUpdatePartialSchema = (
                 parse_update_data(data)
             )
-            user: user_models.UserModel = await fetch_user(sid, user_service)
+            user: user_models.UserModel = await fetch_user(sub, user_service)
             user = update_user_model(user, user_update_data)
             updated_user: user_models.UserModel = (
                 await user_service.update_account_information(
@@ -118,7 +116,7 @@ async def update_user(
                 image_url=updated_user.image_url,
             )
         else:
-            user: user_models.UserModel = await fetch_user(sid, user_service)
+            user: user_models.UserModel = await fetch_user(sub, user_service)
 
             return user_schemas.UserResponseSchema(
                 id=user.id,
@@ -175,14 +173,15 @@ async def verify_email(
     status_code=status.HTTP_200_OK,
 )
 async def resend_email(
-    credentials: annotations.credential_schema,
-    auth_service: annotations.auth_service,
     user_service: annotations.user_service,
+    user_info: annotations.verify_token,
     request: Request,
 ) -> typing.Any:
-    sid: str = await auth_service.verify_token(credentials.credentials)
+    if user_info["email_verified"]:
+        raise custom_exceptions.ForbiddenExcetion(detail="Account already verified.")
 
-    await user_service.resend_verification_email(id=uuid.UUID(sid), request=request)
+    sub = user_info["sub"]
+    await user_service.resend_verification_email(id=uuid.UUID(sub), request=request)
 
     return BaseInforamtionResponse(
         status="success",
@@ -232,10 +231,10 @@ def parse_update_data(data: dict) -> user_schemas.UserRequestUpdatePartialSchema
 
 
 async def fetch_user(
-    sid: str, user_service: annotations.user_service
+    sub: str, user_service: annotations.user_service
 ) -> user_models.UserModel:
     user: user_models.UserModel | None = await user_service.get_account_information(
-        uuid.UUID(sid)
+        uuid.UUID(sub)
     )
     if not user:
         raise custom_exceptions.NotFoundException(detail="User not found.")
