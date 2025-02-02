@@ -67,6 +67,11 @@ services:
       ACCESS_KEY: ${ACCESS_KEY}
       SECRET_KEY: ${SECRET_KEY}
       ECHO: ${ECHO}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_USERNAME: ${EMAIL_USERNAME}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM}
   postgresql-keycloak:
     container_name: keycloak-db
     image: postgres:16-alpine
@@ -140,7 +145,12 @@ services:
         ENDPOINT: ${ENDPOINT}
         ACCESS_KEY: ${ACCESS_KEY}
         SECRET_KEY: ${SECRET_KEY}
-    command: ["upgrade", "head"]
+        ECHO: ${ECHO}
+        EMAIL_HOST: ${EMAIL_HOST}
+        EMAIL_PORT: ${EMAIL_PORT}
+        EMAIL_USERNAME: ${EMAIL_USERNAME}
+        EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+        EMAIL_FROM: ${EMAIL_FROM}
   minio:
     container_name: minio
     image: minio/minio:latest
