@@ -70,7 +70,7 @@ class SMTPConfig(BaseSettings):
     EMAIL_PORT: int = 587
     EMAIL_USERNAME: str = "admin"
     EMAIL_PASSWORD: str = "admin"
-    EMAIL_FROM: EmailStr = "admin@localhost"
+    EMAIL_FROM: EmailStr = "admin@mail.com"
 
 
 env_jinja2 = Environment(

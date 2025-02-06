@@ -181,7 +181,10 @@ async def resend_email(
         raise custom_exceptions.ForbiddenExcetion(detail="Account already verified.")
 
     sub = user_info["sub"]
-    await user_service.resend_verification_email(id=uuid.UUID(sub), request=request)
+    user: user_models.UserModel | None = await user_service.get_account_information(
+        uuid.UUID(sub)
+    )
+    await user_service.resend_verification_email(user=user, request=request)
 
     return BaseInforamtionResponse(
         status="success",

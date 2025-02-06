@@ -11,7 +11,7 @@ user_table = Table(
     Column("email", String(255), nullable=False, unique=True),
     Column("birth_date", Date, nullable=True),
     Column("image_url", String(255), nullable=True, unique=True),
-    Column("verification_code", String(255), nullable=False),
+    Column("verification_code", String(255), nullable=True),
     Column(
         "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
     ),
@@ -19,6 +19,13 @@ user_table = Table(
         "updated_at",
         DateTime(timezone=True),
         nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
+    Column(
+        "verification_code_created_at",
+        DateTime(timezone=True),
+        nullable=True,
         server_default=func.now(),
         onupdate=func.now(),
     ),
