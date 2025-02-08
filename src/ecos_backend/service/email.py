@@ -5,7 +5,7 @@ from pydantic import EmailStr, HttpUrl
 from ecos_backend.common import config
 
 
-class Email:
+class EmailService:
     def __init__(self, url: HttpUrl, email: list[EmailStr]) -> None:
         self._sender: str = "Ecos <ecos@ecos.com>"
         self._email: list[EmailStr] = email
