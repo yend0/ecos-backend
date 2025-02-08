@@ -1,8 +1,8 @@
 """migration user table
 
-Revision ID: 1242e60b6528
+Revision ID: 293a860cd29d
 Revises: 04eb86a566dd
-Create Date: 2025-02-07 01:03:39.129624
+Create Date: 2025-02-08 22:44:48.888073
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "1242e60b6528"
+revision: str = "293a860cd29d"
 down_revision: Union[str, None] = "04eb86a566dd"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,10 +24,7 @@ def upgrade() -> None:
     op.add_column(
         "User",
         sa.Column(
-            "verification_code_created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=True,
+            "verification_code_created_at", sa.DateTime(timezone=True), nullable=True
         ),
     )
     op.alter_column(
