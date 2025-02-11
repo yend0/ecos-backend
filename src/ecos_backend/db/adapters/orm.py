@@ -1,7 +1,17 @@
-from sqlalchemy import Table, Column, String, Date, DateTime, UUID
 from sqlalchemy.sql import func
+from sqlalchemy import (
+    Table,
+    Column,
+    String,
+    Date,
+    DateTime,
+    UUID,
+    Integer,
+)
+
 
 from ecos_backend.db import mapper_registry
+
 
 user_table = Table(
     "User",
@@ -12,6 +22,7 @@ user_table = Table(
     Column("birth_date", Date, nullable=True),
     Column("image_url", String(255), nullable=True, unique=True),
     Column("verification_code", String(255), nullable=True),
+    Column("points", Integer, nullable=False, default=0),
     Column(
         "created_at",
         DateTime(timezone=True),

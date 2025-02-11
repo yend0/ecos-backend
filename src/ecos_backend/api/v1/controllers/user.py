@@ -74,6 +74,7 @@ async def get_user(
             full_name=user.full_name,
             birth_date=user.birth_date,
             image_url=user.image_url,
+            points=user.points,
         )
     except Exception as e:
         raise custom_exceptions.InternalServerException(detail=str(e))
@@ -114,6 +115,7 @@ async def update_user(
                 full_name=updated_user.full_name,
                 birth_date=updated_user.birth_date,
                 image_url=updated_user.image_url,
+                points=user.points,
             )
         else:
             user: user_models.UserModel = await fetch_user(sub, user_service)

@@ -19,6 +19,7 @@ class UserResponseSchema(UserBaseSchema):
     birth_date: datetime.date | None = None
     image_url: HttpUrl | None = None
     full_name: str | None = None
+    points: int
 
     model_config: ConfigDict = ConfigDict(from_attributes=True)
 
