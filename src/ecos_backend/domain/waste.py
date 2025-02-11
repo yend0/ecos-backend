@@ -1,0 +1,18 @@
+from dataclasses import dataclass
+import uuid
+from ecos_backend.common.interfaces import model
+
+
+@dataclass
+class WasteModel(model.AbstractModel):
+    id: int
+    name: str
+    description: str
+    reception_point_id: uuid.UUID
+    image_url: str = None
+
+    def __post_init__(self) -> None:
+        if len(self.name) < 1:
+            raise ValueError("Waste name cannot be empty.")
+        if not isinstance(self.reception_point_id, uuid.UUID):
+            raise ValueError("Invalid reception_point_id.")

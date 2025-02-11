@@ -18,6 +18,7 @@ class UserModel(model.AbstractModel):
     full_name: str = None
     birth_date: datetime.date = None
     image_url: str = None
+    points: int = 0
     verification_code: str = field(default=None)
     verification_code_created_at: datetime.datetime = field(default=None)
 
