@@ -13,7 +13,7 @@ from ecos_backend.domain.user import UserModel
 from sqlalchemy.ext import asyncio
 
 
-class UserAbstractReposity(AbstractRepository[UserModel], abc.ABC):
+class UserAbstractReposity(AbstractRepository[UserModel]):
     @abc.abstractmethod
     async def get_by_verification_code(self, verification_code: str) -> UserModel:
         raise NotImplementedError()

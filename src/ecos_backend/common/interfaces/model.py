@@ -26,10 +26,7 @@ class AbstractModel(abc.ABC):
 
         if exclude is not None:
             for key in exclude:
-                try:
-                    del data[key]
-                except KeyError:
-                    pass
+                data.pop(key, None)
 
         if include is not None:
             data.update(include)

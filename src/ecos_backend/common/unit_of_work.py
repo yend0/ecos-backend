@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ecos_backend.common.interfaces.unit_of_work import AbstractUnitOfWork
 from ecos_backend.db.repositories.user import UserReposity
+from ecos_backend.db.repositories.reception_point import ReceptionPointReposity
 
 
 class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
@@ -10,6 +11,7 @@ class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
 
     async def __aenter__(self) -> "SQLAlchemyUnitOfWork":
         self.user = UserReposity(self._session)
+        self.reception_point = ReceptionPointReposity(self._session)
 
         return await super().__aenter__()
 

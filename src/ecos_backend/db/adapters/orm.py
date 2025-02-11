@@ -1,4 +1,4 @@
-from sqlalchemy.sql import func, text
+from sqlalchemy.sql import func
 from sqlalchemy import (
     ForeignKey,
     Table,
@@ -52,14 +52,7 @@ user_table = Table(
 accrual_history_table = Table(
     "Accrual_History",
     mapper_registry.metadata,
-    Column(
-        "id",
-        UUID,
-        primary_key=True,
-        nullable=False,
-        unique=True,
-        server_default=text("gen_random_uuid()"),
-    ),
+    Column("id", UUID, primary_key=True, nullable=False, unique=True),
     Column("Reward", Enum(enums.Reward), nullable=False),
     Column("points", Integer, nullable=False),
     Column(
@@ -79,14 +72,7 @@ accrual_history_table = Table(
 work_schedule_table = Table(
     "Work_Schedule",
     mapper_registry.metadata,
-    Column(
-        "id",
-        UUID,
-        primary_key=True,
-        nullable=False,
-        unique=True,
-        server_default=text("gen_random_uuid()"),
-    ),
+    Column("id", UUID, primary_key=True, nullable=False, unique=True),
     Column("day_of_week", SmallInteger, nullable=False),
     Column("open_time", Time, nullable=False),
     Column("close_time", Time, nullable=False),
@@ -118,14 +104,7 @@ waste_table = Table(
 reception_point_table = Table(
     "Reception_Point",
     mapper_registry.metadata,
-    Column(
-        "id",
-        UUID,
-        primary_key=True,
-        nullable=False,
-        unique=True,
-        server_default=text("gen_random_uuid()"),
-    ),
+    Column("id", UUID, primary_key=True, nullable=False, unique=True),
     Column("name", String(32), nullable=False),
     Column("address", String(255), nullable=False, unique=True),
     Column("images_url", String(255), nullable=True, unique=True),
@@ -168,17 +147,27 @@ def start_mappers() -> None:
     from ecos_backend.domain.waste import WasteModel
     from ecos_backend.domain.work_schedule import WorkScheduleModel
 
-    mapper_registry.map_imperatively(class_=UserModel, local_table=user_table)
     mapper_registry.map_imperatively(
-        class_=AccrualHistoryModel, local_table=accrual_history_table
+        class_=UserModel,
+        local_table=user_table,
     )
     mapper_registry.map_imperatively(
-        class_=WorkScheduleModel, local_table=work_schedule_table
-    )
-    mapper_registry.map_imperatively(class_=WasteModel, local_table=waste_table)
-    mapper_registry.map_imperatively(
-        class_=ReceptionPointModel, local_table=reception_point_table
+        class_=AccrualHistoryModel,
+        local_table=accrual_history_table,
     )
     mapper_registry.map_imperatively(
-        class_=DropOffPointWasteModel, local_table=drop_off_point_waste_table
+        class_=WorkScheduleModel,
+        local_table=work_schedule_table,
+    )
+    mapper_registry.map_imperatively(
+        class_=WasteModel,
+        local_table=waste_table,
+    )
+    mapper_registry.map_imperatively(
+        class_=ReceptionPointModel,
+        local_table=reception_point_table,
+    )
+    mapper_registry.map_imperatively(
+        class_=DropOffPointWasteModel,
+        local_table=drop_off_point_waste_table,
     )

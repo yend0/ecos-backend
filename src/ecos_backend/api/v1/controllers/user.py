@@ -17,13 +17,11 @@ from streaming_form_data.validators import MaxSizeValidator, ValidationError
 from ecos_backend.domain import user as user_models
 from ecos_backend.common import exception as custom_exceptions
 from ecos_backend.common import validation
+from ecos_backend.common import constatnts as const
 
 from ecos_backend.api.v1 import annotations
 from ecos_backend.api.v1.schemas import user as user_schemas
 from ecos_backend.api.v1.schemas.base import BaseInforamtionResponse
-
-MAX_FILE_SIZE = 1024 * 1024 * 10  # 10MB
-MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 10 + 1024
 
 
 router = APIRouter()
@@ -131,7 +129,7 @@ async def update_user(
         pass
     except validation.MaxBodySizeException as e:
         raise custom_exceptions.PayloadTooLargeException(
-            detail=f"Maximum request body size limit ({MAX_REQUEST_BODY_SIZE} bytes) exceeded ({e.body_len} bytes read)."
+            detail=f"Maximum request body size limit ({const.MAX_REQUEST_BODY_SIZE} bytes) exceeded ({e.body_len} bytes read)."
         )
     except ValidationError as e:
         raise custom_exceptions.ValidationException(detail=f"{str(e)}")
@@ -197,7 +195,7 @@ async def resend_email(
 async def parse_request(
     request: Request,
 ) -> tuple[dict | None, bytes | None, str | None]:
-    body_validator = validation.MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
+    body_validator = validation.MaxBodySizeValidator(const.MAX_REQUEST_BODY_SIZE)
     data = ValueTarget()
     filename = request.headers.get("filename")
     parser = StreamingFormDataParser(headers=request.headers)
@@ -205,7 +203,9 @@ async def parse_request(
     file_target = None
     if filename:
         filename: str = unquote(filename)
-        file_target = validation.BytesTarget(validator=MaxSizeValidator(MAX_FILE_SIZE))
+        file_target = validation.BytesTarget(
+            validator=MaxSizeValidator(const.MAX_FILE_SIZE)
+        )
         parser.register("file", file_target)
 
     parser.register("data", data)

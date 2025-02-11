@@ -10,6 +10,7 @@ from ecos_backend.common.exception import (
     NotFoundException,
 )
 from ecos_backend.common.unit_of_work import AbstractUnitOfWork
+from ecos_backend.common.config import s3_config
 from ecos_backend.service.email import EmailService
 from ecos_backend.domain.user import UserModel
 from ecos_backend.db.s3_storage import Boto3DAO
@@ -104,9 +105,10 @@ class UserService:
             if file_extention is not None:
                 try:
                     url = self._s3_storage.upload_object(
-                        f"{str(user.id)}/image/{file_extention}",
-                        str(f"{uuid.uuid4()}.{file_extention}"),
-                        file,
+                        bucket_name=s3_config.USER_BUCKET,
+                        prefix=f"{str(user.id)}/image/{file_extention}",
+                        source_file_name=str(f"{uuid.uuid4()}.{file_extention}"),
+                        content=file,
                     )
                     clean_url = url.split("?")[0]
                     user.update_profile_image(clean_url)

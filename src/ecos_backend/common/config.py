@@ -59,7 +59,9 @@ class KeycloakConfig(BaseSettings):
 
 class S3Config(BaseSettings):
     S3_DOMAIN: str = "localhost"
-    BUCKET_NAME: str = "defaulrt_bucket"
+    USER_BUCKET: str = "defaulrt_bucket"
+    RECEPTION_POINT_BUCKET: str = "defaulrt_bucket"
+    WASTE_BUCKET: str = "defaulrt_bucket"
     ENDPOINT: str = "http://localhost:9000"
     ACCESS_KEY: str = "admin"
     SECRET_KEY: str = "admin"

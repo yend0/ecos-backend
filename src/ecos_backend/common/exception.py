@@ -38,6 +38,11 @@ class PayloadTooLargeException(HTTPException):
         super(PayloadTooLargeException, self).__init__(status_code=413, detail=detail)
 
 
+class ValidationException(HTTPException):
+    def __init__(self, detail: str) -> None:
+        super(ValidationException, self).__init__(status_code=422, detail=detail)
+
+
 class InternalServerException(HTTPException):
     def __init__(self, detail: str) -> None:
         super(InternalServerException, self).__init__(status_code=500, detail=detail)
