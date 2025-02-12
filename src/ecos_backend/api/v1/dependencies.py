@@ -31,6 +31,7 @@ from ecos_backend.common.keycloak_adapters import (
 
 from ecos_backend.service.user import UserService
 from ecos_backend.service.reception_point import ReceptionPointService
+from ecos_backend.service.waste import WasteService
 
 
 bearer_scheme = HTTPBearer()
@@ -65,6 +66,13 @@ async def get_reception_point_service(
     s3: typing.Annotated[s3_storage.Boto3DAO, Depends(s3_client)],
 ) -> UserService:
     return ReceptionPointService(uow=uow, s3_storage=s3)
+
+
+async def get_waste_service(
+    uow: typing.Annotated[AbstractUnitOfWork, Depends(get_uow)],
+    s3: typing.Annotated[s3_storage.Boto3DAO, Depends(s3_client)],
+) -> UserService:
+    return WasteService(uow=uow, s3_storage=s3)
 
 
 async def verify_token(

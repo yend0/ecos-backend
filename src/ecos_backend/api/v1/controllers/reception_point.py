@@ -20,7 +20,6 @@ from ecos_backend.common import validation
 from ecos_backend.common import constatnts as const
 
 from ecos_backend.api.v1 import annotations
-from ecos_backend.api.v1.schemas.base import BaseInforamtionResponse
 from ecos_backend.api.v1.schemas.reception_point import ReceptionPointResponseSchema
 from ecos_backend.domain.reception_point import ReceptionPointModel
 
@@ -31,7 +30,7 @@ router = APIRouter()
     "",
     summary="Create reception point",
     response_description="Reception point created successfully",
-    response_model=BaseInforamtionResponse,
+    response_model=ReceptionPointResponseSchema,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_reception_point(
@@ -44,18 +43,19 @@ async def create_reception_point(
     try:
         data, uploaded_files = await parse_request(request)
 
-        await reception_point_service.add_reception_point(
-            reception_point=ReceptionPointModel(
-                name=data["name"],
-                address=data["address"],
-                user_id=uuid.UUID(sub),
-            ),
-            uploaded_files=uploaded_files,
+        reception_point: ReceptionPointModel = (
+            await reception_point_service.add_reception_point(
+                reception_point=ReceptionPointModel(
+                    name=data["name"],
+                    address=data["address"],
+                    user_id=uuid.UUID(sub),
+                ),
+                uploaded_files=uploaded_files,
+            )
         )
 
-        return BaseInforamtionResponse(
-            status="success",
-            message="Reception point added.",
+        return ReceptionPointResponseSchema(
+            **await reception_point.to_dict(exclude={"images_url"})
         )
     except ClientDisconnect:
         pass

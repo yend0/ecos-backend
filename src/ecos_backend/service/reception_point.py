@@ -40,6 +40,16 @@ class ReceptionPointService:
                 reception_point = await self._uow.reception_point.add(reception_point)
                 await self._uow.commit()
 
+                prefixes: list[str] = self._s3_storage.get_objects(
+                    bucket_name=s3_config.RECEPTION_POINT_BUCKET,
+                    prefix=reception_point.images_url,
+                )
+                urls: list[str] = [
+                    f"{s3_config.ENDPOINT}/{s3_config.RECEPTION_POINT_BUCKET}/{prefix}"
+                    for prefix in prefixes
+                ]
+                reception_point.set_image_urls(urls)
+
             return reception_point
 
     async def get_reception_points(self) -> list[ReceptionPointModel]:
@@ -48,13 +58,13 @@ class ReceptionPointService:
                 ReceptionPointModel
             ] = await self._uow.reception_point.get_all()
             for reception_point in reception_points:
-                prefixs: list[str] = self._s3_storage.get_objects(
+                prefixes: list[str] = self._s3_storage.get_objects(
                     bucket_name=s3_config.RECEPTION_POINT_BUCKET,
                     prefix=reception_point.images_url,
                 )
                 urls: list[str] = [
-                    f"http://localhost:9000/{s3_config.RECEPTION_POINT_BUCKET}/{prefix}"
-                    for prefix in prefixs
+                    f"{s3_config.ENDPOINT}/{s3_config.RECEPTION_POINT_BUCKET}/{prefix}"
+                    for prefix in prefixes
                 ]
                 reception_point.set_image_urls(urls)
             return reception_points
@@ -87,13 +97,13 @@ class ReceptionPointService:
             ) = await self._uow.reception_point.get_by_id(id=id)
             if not reception_point:
                 return None
-            prefixs: list[str] = self._s3_storage.get_objects(
+            prefixes: list[str] = self._s3_storage.get_objects(
                 bucket_name=s3_config.RECEPTION_POINT_BUCKET,
                 prefix=reception_point.images_url,
             )
             urls: list[str] = [
-                f"http://localhost:9000/{s3_config.RECEPTION_POINT_BUCKET}/{prefix}"
-                for prefix in prefixs
+                f"{s3_config.ENDPOINT}/{s3_config.RECEPTION_POINT_BUCKET}/{prefix}"
+                for prefix in prefixes
             ]
             reception_point.set_image_urls(urls)
             return reception_point

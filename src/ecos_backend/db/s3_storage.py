@@ -105,7 +105,7 @@ def s3_bucket_factory(config: config.S3Config) -> Boto3DAO:
         bucket_names={
             config.USER_BUCKET: config.USER_BUCKET,
             config.RECEPTION_POINT_BUCKET: config.RECEPTION_POINT_BUCKET,
-            config.WASTE_BUCKET: config.RECEPTION_POINT_BUCKET,
+            config.WASTE_BUCKET: config.WASTE_BUCKET,
         },
         endpoint=config.ENDPOINT,
         access_key=config.ACCESS_KEY,

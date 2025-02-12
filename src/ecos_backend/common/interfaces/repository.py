@@ -67,3 +67,4 @@ class AbstractSqlRepository(AbstractRepository[T], abc.ABC):
         self._session.add(record)
         await self._session.flush()
         await self._session.refresh(record)
+        return record
