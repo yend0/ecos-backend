@@ -1,14 +1,16 @@
-from dataclasses import dataclass
 import uuid
+
+from dataclasses import dataclass
+
 from ecos_backend.common.interfaces import model
 
 
 @dataclass
 class WasteModel(model.AbstractModel):
-    id: int
     name: str
     description: str
     reception_point_id: uuid.UUID
+    id: int = None
     image_url: str = None
 
     def __post_init__(self) -> None:
