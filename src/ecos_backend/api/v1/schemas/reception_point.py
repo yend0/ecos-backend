@@ -10,7 +10,7 @@ class ReceptionPointBaseSchema(BaseModel):
     name: str
     address: str
     user_id: uuid.UUID
-    status: enums.StatusPoint
+    status: enums.PointStatus
 
     model_config: ConfigDict = ConfigDict(extra="forbid")
 

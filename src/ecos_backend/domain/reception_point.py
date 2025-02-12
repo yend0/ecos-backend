@@ -13,9 +13,9 @@ class ReceptionPointModel(model.AbstractModel):
     name: str
     address: str
     user_id: uuid.UUID
-    status: enums.StatusPoint
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     urls: list[str] = field(default_factory=list)
+    status: enums.PointStatus = None
     images_url: str = None
     updated_at: datetime = None
 
