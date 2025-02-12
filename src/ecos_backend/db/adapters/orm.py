@@ -96,12 +96,6 @@ waste_table = Table(
     Column("name", String(32), nullable=False),
     Column("description", Text, nullable=False),
     Column("image_url", String(255), nullable=True, unique=True),
-    Column(
-        "reception_point_id",
-        UUID,
-        ForeignKey("Reception_Point.id", onupdate="CASCADE", ondelete="CASCADE"),
-        nullable=False,
-    ),
 )
 
 reception_point_table = Table(
