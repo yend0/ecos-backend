@@ -25,7 +25,6 @@ class UserResponseSchema(UserBaseSchema):
 
 
 class UserRequestUpdatePartialSchema(BaseModel):
-    email: EmailStr | None = None
     birth_date: datetime.date | None = None
     full_name: str | None = None
 
