@@ -87,7 +87,11 @@ waste_table = Table(
     "Waste",
     mapper_registry.metadata,
     Column(
-        "id", Integer, primary_key=True, nullable=False, unique=True, autoincrement=True
+        "id",
+        UUID,
+        primary_key=True,
+        nullable=False,
+        unique=True,
     ),
     Column("name", String(32), nullable=False),
     Column("description", Text, nullable=False),

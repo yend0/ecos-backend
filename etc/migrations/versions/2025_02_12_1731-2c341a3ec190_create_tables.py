@@ -1,8 +1,8 @@
 """create tables
 
-Revision ID: 6eda1fbeb4ca
+Revision ID: 2c341a3ec190
 Revises: 8d08e3d144ec
-Create Date: 2025-02-12 15:15:50.502270
+Create Date: 2025-02-12 17:31:56.137692
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "6eda1fbeb4ca"
+revision: str = "2c341a3ec190"
 down_revision: Union[str, None] = "8d08e3d144ec"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -69,7 +69,7 @@ def upgrade() -> None:
     )
     op.create_table(
         "Waste",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("name", sa.String(length=32), nullable=False),
         sa.Column("description", sa.Text(), nullable=False),
         sa.Column("image_url", sa.String(length=255), nullable=True),
@@ -115,7 +115,7 @@ def upgrade() -> None:
     )
     op.create_table(
         "Drop_Off_Point_Waste",
-        sa.Column("waste_id", sa.Integer(), nullable=False),
+        sa.Column("waste_id", sa.UUID(), nullable=False),
         sa.Column("reception_point_id", sa.UUID(), nullable=False),
         sa.ForeignKeyConstraint(
             ["reception_point_id"], ["Reception_Point.id"], ondelete="CASCADE"
