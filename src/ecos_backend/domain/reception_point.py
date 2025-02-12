@@ -1,7 +1,11 @@
-from dataclasses import dataclass, field
 import uuid
+
+
+from dataclasses import dataclass, field
 from datetime import datetime
+
 from ecos_backend.common.interfaces import model
+from ecos_backend.common import enums
 
 
 @dataclass
@@ -9,6 +13,7 @@ class ReceptionPointModel(model.AbstractModel):
     name: str
     address: str
     user_id: uuid.UUID
+    status: enums.StatusPoint
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     urls: list[str] = field(default_factory=list)
     images_url: str = None

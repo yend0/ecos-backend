@@ -53,7 +53,7 @@ accrual_history_table = Table(
     "Accrual_History",
     mapper_registry.metadata,
     Column("id", UUID, primary_key=True, nullable=False, unique=True),
-    Column("Reward", Enum(enums.Reward), nullable=False),
+    Column("reward", Enum(enums.RewardType), nullable=False),
     Column("points", Integer, nullable=False),
     Column(
         "created_at",
@@ -120,6 +120,12 @@ reception_point_table = Table(
         UUID,
         ForeignKey("User.id", onupdate="CASCADE", ondelete="CASCADE"),
         nullable=False,
+    ),
+    Column(
+        "status",
+        Enum(enums.PointStatus),
+        nullable=False,
+        default=enums.PointStatus.UNDER_MODERATION,
     ),
 )
 

@@ -1,5 +1,11 @@
 import enum
 
 
-class Reward(enum.Enum):
-    recycle_point_add: str = "Добавлен пункт"
+class RewardType(enum.Enum):
+    RECYCLE_POINT_ADD: str = "Добавлен пункт"
+
+
+class PointStatus(enum.Enum):
+    UNDER_MODERATION: str = "На модерации"
+    APPROVED: str = "Одобрено"
+    REJECTED: str = "Отклонено"

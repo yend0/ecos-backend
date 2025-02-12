@@ -3,11 +3,14 @@ import datetime
 
 from pydantic import BaseModel, ConfigDict, HttpUrl
 
+from ecos_backend.common import enums
+
 
 class ReceptionPointBaseSchema(BaseModel):
     name: str
     address: str
     user_id: uuid.UUID
+    status: enums.StatusPoint
 
     model_config: ConfigDict = ConfigDict(extra="forbid")
 
