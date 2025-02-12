@@ -16,5 +16,8 @@ reception_point_service = typing.Annotated[
     ReceptionPointService, Depends(dependencies.get_reception_point_service)
 ]
 
+dict_file_extension = typing.Annotated[
+    tuple[dict | None, bytes | None, str | None], Depends(dependencies.parse_request)
+]
 
 verify_token = typing.Annotated[dict, Depends(dependencies.verify_token)]

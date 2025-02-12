@@ -89,9 +89,9 @@ async def get_reception_points(
 
 
 @router.delete(
-    "{reception_point_id}",
-    summary="Get reception points",
-    response_description="Reception points retrieved successfully",
+    "/{reception_point_id}",
+    summary="Delete reception point",
+    response_description="Reception point deleted successfully",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_reception_points(

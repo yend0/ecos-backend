@@ -1,24 +1,37 @@
+import os
+import json
 import typing
 
-from fastapi import Depends, Security
+from urllib.parse import unquote
 
+from fastapi import Depends, Security, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from keycloak import KeycloakAdmin
 
-from ecos_backend.common.exception import ForbiddenExcetion, UnauthorizedExcetion
+from streaming_form_data import StreamingFormDataParser
+from streaming_form_data.targets import ValueTarget
+from streaming_form_data.validators import MaxSizeValidator
+
+
 from ecos_backend.db import s3_storage
 from ecos_backend.db import database
 from ecos_backend.common import config
-
+from ecos_backend.common import validation
+from ecos_backend.common import constatnts as const
+from ecos_backend.common import exception as custom_exceptions
+from ecos_backend.common.exception import ForbiddenExcetion, UnauthorizedExcetion
+from ecos_backend.common.unit_of_work import SQLAlchemyUnitOfWork, AbstractUnitOfWork
 from ecos_backend.common.keycloak_adapters import (
     KeycloakAdminAdapter,
     KeycloakClientAdapter,
 )
-from ecos_backend.common.unit_of_work import SQLAlchemyUnitOfWork, AbstractUnitOfWork
+
 from ecos_backend.service.user import UserService
 from ecos_backend.service.reception_point import ReceptionPointService
+
 
 bearer_scheme = HTTPBearer()
 
@@ -68,3 +81,40 @@ async def verify_token(
     except Exception as e:
         print(f"Error: {str(e)}")
         raise ForbiddenExcetion(detail="Invalid or expired token")
+
+
+async def parse_request(
+    request: Request,
+) -> tuple[dict | None, bytes | None, str | None]:
+    body_validator = validation.MaxBodySizeValidator(const.MAX_REQUEST_BODY_SIZE)
+    data = ValueTarget()
+    filename = request.headers.get("filename")
+    parser = StreamingFormDataParser(headers=request.headers)
+
+    file_target = None
+    if filename:
+        filename: str = unquote(filename)
+        file_target = validation.BytesTarget(
+            validator=MaxSizeValidator(const.MAX_FILE_SIZE)
+        )
+        parser.register("file", file_target)
+
+    parser.register("data", data)
+
+    async for chunk in request.stream():
+        body_validator(chunk)
+        parser.data_received(chunk)
+
+    data_dict: os.Any | None = json.loads(data.value.decode()) if data.value else None
+    file_bytes: bytes | None = file_target.content if file_target else None
+
+    if file_bytes:
+        try:
+            file_extension: str = validation.FileTypeValidator.validate(
+                file_bytes
+            ).lstrip(".")
+        except validation.InvalidFileTypeException as e:
+            raise custom_exceptions.ValidationException(detail=str(e))
+        return data_dict, file_bytes, file_extension
+    else:
+        return data_dict, None, None

@@ -1,17 +1,11 @@
-import os
-import json
 import typing
 import uuid
-
-from urllib.parse import unquote
 
 from fastapi import APIRouter, Request, status
 
 from starlette.requests import ClientDisconnect
 
-from streaming_form_data import StreamingFormDataParser
-from streaming_form_data.targets import ValueTarget
-from streaming_form_data.validators import MaxSizeValidator, ValidationError
+from streaming_form_data.validators import ValidationError
 
 
 from ecos_backend.domain import user as user_models
@@ -88,12 +82,12 @@ async def get_user(
 async def update_user(
     user_service: annotations.user_service,
     user_info: annotations.verify_token,
-    request: Request,
+    dict_file_extension: annotations.dict_file_extension,
 ) -> typing.Any:
     sub = user_info["sub"]
 
     try:
-        data, file_bytes, file_extention = await parse_request(request)
+        data, file_bytes, file_extention = dict_file_extension
 
         if data:
             user_update_data: user_schemas.UserRequestUpdatePartialSchema = (
@@ -190,42 +184,6 @@ async def resend_email(
         status="success",
         message="Verification token successfully sent to your email.",
     )
-
-
-async def parse_request(
-    request: Request,
-) -> tuple[dict | None, bytes | None, str | None]:
-    body_validator = validation.MaxBodySizeValidator(const.MAX_REQUEST_BODY_SIZE)
-    data = ValueTarget()
-    filename = request.headers.get("filename")
-    parser = StreamingFormDataParser(headers=request.headers)
-
-    file_target = None
-    if filename:
-        filename: str = unquote(filename)
-        file_target = validation.BytesTarget(
-            validator=MaxSizeValidator(const.MAX_FILE_SIZE)
-        )
-        parser.register("file", file_target)
-
-    parser.register("data", data)
-
-    async for chunk in request.stream():
-        body_validator(chunk)
-        parser.data_received(chunk)
-
-    data_dict: os.Any | None = json.loads(data.value.decode()) if data.value else None
-    file_bytes: bytes | None = file_target.content if file_target else None
-
-    if file_bytes:
-        try:
-            file_extension: str = validation.FileTypeValidator.validate(
-                file_bytes
-            ).lstrip(".")
-        except validation.InvalidFileTypeException as e:
-            raise custom_exceptions.ValidationException(detail=str(e))
-
-    return data_dict, file_bytes, file_extension
 
 
 def parse_update_data(data: dict) -> user_schemas.UserRequestUpdatePartialSchema:
