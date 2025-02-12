@@ -104,7 +104,7 @@ reception_point_table = Table(
     "Reception_Point",
     mapper_registry.metadata,
     Column("id", UUID, primary_key=True, nullable=False, unique=True),
-    Column("name", String(32), nullable=False),
+    Column("name", String(255), nullable=False),
     Column("address", String(255), nullable=False, unique=True),
     Column("images_url", String(255), nullable=True, unique=True),
     Column(
@@ -134,21 +134,6 @@ drop_off_point_waste_table = Table(
     Column(
         "waste_id",
         ForeignKey("Waste.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-    Column(
-        "reception_point_id",
-        ForeignKey("Reception_Point.id", ondelete="CASCADE"),
-        primary_key=True,
-    ),
-)
-
-open_hours_point = Table(
-    "Open_Hours_Point",
-    mapper_registry.metadata,
-    Column(
-        "work_schedule_id",
-        ForeignKey("Work_Schedule.id"),
         primary_key=True,
     ),
     Column(
