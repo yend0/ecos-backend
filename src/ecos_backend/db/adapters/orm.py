@@ -8,7 +8,6 @@ from sqlalchemy import (
     DateTime,
     UUID,
     Integer,
-    SmallInteger,
     Time,
     Text,
     Enum,
@@ -73,7 +72,7 @@ work_schedule_table = Table(
     "Work_Schedule",
     mapper_registry.metadata,
     Column("id", UUID, primary_key=True, nullable=False, unique=True),
-    Column("day_of_week", SmallInteger, nullable=False),
+    Column("day_of_week", Enum(enums.Day), nullable=False),
     Column("open_time", Time, nullable=False),
     Column("close_time", Time, nullable=False),
     Column(
@@ -135,6 +134,21 @@ drop_off_point_waste_table = Table(
     Column(
         "waste_id",
         ForeignKey("Waste.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "reception_point_id",
+        ForeignKey("Reception_Point.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+open_hours_point = Table(
+    "Open_Hours_Point",
+    mapper_registry.metadata,
+    Column(
+        "work_schedule_id",
+        ForeignKey("Work_Schedule.id"),
         primary_key=True,
     ),
     Column(
