@@ -1,4 +1,3 @@
-import os
 import json
 import typing
 
@@ -13,7 +12,6 @@ from keycloak import KeycloakAdmin
 
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.targets import ValueTarget
-from streaming_form_data.validators import MaxSizeValidator
 
 
 from ecos_backend.db import s3_storage
@@ -93,19 +91,26 @@ async def verify_token(
 
 async def parse_request(
     request: Request,
-) -> tuple[dict | None, bytes | None, str | None]:
+) -> tuple[dict | None, list[tuple[str, bytes, str]] | None]:
     body_validator = validation.MaxBodySizeValidator(const.MAX_REQUEST_BODY_SIZE)
     data = ValueTarget()
-    filename = request.headers.get("filename")
     parser = StreamingFormDataParser(headers=request.headers)
 
-    file_target = None
-    if filename:
-        filename: str = unquote(filename)
+    file_targets: dict = {}
+
+    filenames_header: str | None = request.headers.get("filenames")
+    filenames: list[str] = (
+        [unquote(f.strip()) for f in filenames_header.split(",")]
+        if filenames_header
+        else []
+    )
+
+    for filename in filenames:
         file_target = validation.BytesTarget(
-            validator=MaxSizeValidator(const.MAX_FILE_SIZE)
+            validator=validation.MaxSizeValidator(const.MAX_FILE_SIZE)
         )
-        parser.register("file", file_target)
+        parser.register(filename, file_target)
+        file_targets[filename] = file_target
 
     parser.register("data", data)
 
@@ -113,16 +118,25 @@ async def parse_request(
         body_validator(chunk)
         parser.data_received(chunk)
 
-    data_dict: os.Any | None = json.loads(data.value.decode()) if data.value else None
-    file_bytes: bytes | None = file_target.content if file_target else None
+    try:
+        raw_data: str | None = data.value.decode() if data.value else None
+        if raw_data and raw_data.startswith('"') and raw_data.endswith('"'):
+            raw_data = raw_data[1:-1].replace('\\"', '"')
+        data_dict: dict | None = json.loads(raw_data) if raw_data else None
+    except json.JSONDecodeError as e:
+        raise custom_exceptions.ValidationException(
+            detail=f"Invalid JSON format: {str(e)}"
+        )
 
-    if file_bytes:
-        try:
-            file_extension: str = validation.FileTypeValidator.validate(
-                file_bytes
-            ).lstrip(".")
-        except validation.InvalidFileTypeException as e:
-            raise custom_exceptions.ValidationException(detail=str(e))
-        return data_dict, file_bytes, file_extension
-    else:
-        return data_dict, None, None
+    uploaded_files: list = []
+    for filename, file_target in file_targets.items():
+        if file_target.content:
+            try:
+                file_extension: str = validation.FileTypeValidator.validate(
+                    file_target.content
+                ).lstrip(".")
+                uploaded_files.append((filename, file_target.content, file_extension))
+            except validation.InvalidFileTypeException as e:
+                raise custom_exceptions.ValidationException(detail=str(e))
+
+    return data_dict, uploaded_files

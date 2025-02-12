@@ -19,8 +19,9 @@ reception_point_service = typing.Annotated[
 waste_service = typing.Annotated[WasteService, Depends(dependencies.get_waste_service)]
 
 
-dict_file_extension = typing.Annotated[
-    tuple[dict | None, bytes | None, str | None], Depends(dependencies.parse_request)
+data_request = typing.Annotated[
+    tuple[dict | None, list[tuple[str, bytes, str]] | None],
+    Depends(dependencies.parse_request),
 ]
 
 verify_token = typing.Annotated[dict, Depends(dependencies.verify_token)]

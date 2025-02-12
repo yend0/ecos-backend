@@ -3,13 +3,15 @@ import uuid
 
 from fastapi import APIRouter, Request, status
 
+from fastapi.responses import HTMLResponse
+from jinja2 import Template
 from starlette.requests import ClientDisconnect
 
 from streaming_form_data.validators import ValidationError
 
 
 from ecos_backend.domain import user as user_models
-from ecos_backend.common import exception as custom_exceptions
+from ecos_backend.common import config, enums, exception as custom_exceptions
 from ecos_backend.common import validation
 from ecos_backend.common import constatnts as const
 
@@ -40,7 +42,7 @@ async def register_user(
     )
 
     return BaseInforamtionResponse(
-        status="success",
+        status=enums.Status.SUCCESS,
         message="User created successfully. Verification token successfully sent to your email.",
     )
 
@@ -82,12 +84,12 @@ async def get_user(
 async def update_user(
     user_service: annotations.user_service,
     user_info: annotations.verify_token,
-    dict_file_extension: annotations.dict_file_extension,
+    data_request: annotations.data_request,
 ) -> typing.Any:
     sub = user_info["sub"]
 
     try:
-        data, file_bytes, file_extention = dict_file_extension
+        data, uploaded_files = data_request
 
         if data:
             user_update_data: user_schemas.UserRequestUpdatePartialSchema = (
@@ -95,9 +97,35 @@ async def update_user(
             )
             user: user_models.UserModel = await fetch_user(sub, user_service)
             user = update_user_model(user, user_update_data)
+
+            if uploaded_files:
+                updated_user: user_models.UserModel = (
+                    await user_service.update_account_information(
+                        user=user,
+                        file=uploaded_files[0][1],
+                        file_extention=uploaded_files[0][2],
+                    )
+                )
+            else:
+                updated_user: user_models.UserModel = (
+                    await user_service.update_account_information(user=user)
+                )
+
+            return user_schemas.UserResponseSchema(
+                id=updated_user.id,
+                email=updated_user.email,
+                full_name=updated_user.full_name,
+                birth_date=updated_user.birth_date,
+                image_url=updated_user.image_url,
+                points=user.points,
+            )
+        elif uploaded_files:
+            user: user_models.UserModel = await fetch_user(sub, user_service)
             updated_user: user_models.UserModel = (
                 await user_service.update_account_information(
-                    user=user, file=file_bytes, file_extention=file_extention
+                    user=user,
+                    file=uploaded_files[0][1],
+                    file_extention=uploaded_files[0][2],
                 )
             )
 
@@ -109,6 +137,7 @@ async def update_user(
                 image_url=updated_user.image_url,
                 points=user.points,
             )
+
         else:
             user: user_models.UserModel = await fetch_user(sub, user_service)
 
@@ -139,7 +168,6 @@ async def update_user(
     "/verify-email/{token}",
     summary="Verify email",
     response_description="The email has been verified",
-    response_model=BaseInforamtionResponse,
     status_code=status.HTTP_200_OK,
 )
 async def verify_email(
@@ -153,10 +181,9 @@ async def verify_email(
             detail="Invalid verification code or account already verified."
         )
 
-    return BaseInforamtionResponse(
-        status="success",
-        message="Account verified successfully.",
-    )
+    template: Template = config.env_jinja2.get_template("email_verified.html")
+    html: str = template.render()
+    return HTMLResponse(content=html, status_code=status.HTTP_200_OK)
 
 
 @router.put(
@@ -181,7 +208,7 @@ async def resend_email(
     await user_service.resend_verification_email(user=user, request=request)
 
     return BaseInforamtionResponse(
-        status="success",
+        status=enums.Status.SUCCESS,
         message="Verification token successfully sent to your email.",
     )
 

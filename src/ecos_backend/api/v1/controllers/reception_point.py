@@ -1,18 +1,13 @@
-import json
 import typing
 import uuid
 
-from fastapi import APIRouter, Path, Request, status
+from fastapi import APIRouter, Path, status
 
 from starlette.requests import ClientDisconnect
-
-from urllib.parse import unquote
 
 
 from ecos_backend.common import exception as custom_exceptions
 
-from streaming_form_data import StreamingFormDataParser
-from streaming_form_data.targets import ValueTarget
 from streaming_form_data.validators import ValidationError
 
 
@@ -20,7 +15,10 @@ from ecos_backend.common import validation
 from ecos_backend.common import constatnts as const
 
 from ecos_backend.api.v1 import annotations
-from ecos_backend.api.v1.schemas.reception_point import ReceptionPointResponseSchema
+from ecos_backend.api.v1.schemas.reception_point import (
+    ReceptionPointRequestCreateSchema,
+    ReceptionPointResponseSchema,
+)
 from ecos_backend.domain.reception_point import ReceptionPointModel
 
 router = APIRouter()
@@ -36,27 +34,28 @@ router = APIRouter()
 async def create_reception_point(
     user_info: annotations.verify_token,
     reception_point_service: annotations.reception_point_service,
-    request: Request,
+    data: annotations.data_request,
 ) -> typing.Any:
     sub = user_info["sub"]
 
     try:
-        data, uploaded_files = await parse_request(request)
+        data_dict, uploaded_files = data
 
-        reception_point: ReceptionPointModel = (
-            await reception_point_service.add_reception_point(
-                reception_point=ReceptionPointModel(
-                    name=data["name"],
-                    address=data["address"],
-                    user_id=uuid.UUID(sub),
-                ),
-                uploaded_files=uploaded_files,
-            )
+        data_schema = ReceptionPointRequestCreateSchema(
+            user_id=uuid.UUID(sub), **data_dict
         )
 
-        return ReceptionPointResponseSchema(
-            **await reception_point.to_dict(exclude={"images_url"})
-        )
+        print(**data_schema.model_dump())
+        # reception_point: ReceptionPointModel = (
+        #     await reception_point_service.add_reception_point(
+        #         reception_point=ReceptionPointModel(**data_schema.model_dump()),
+        #         uploaded_files=uploaded_files,
+        #     )
+        # )
+
+        # return ReceptionPointResponseSchema(
+        #     **await reception_point.to_dict(exclude={"images_url"})
+        # )
     except ClientDisconnect:
         pass
     except validation.MaxBodySizeException as e:
@@ -100,56 +99,3 @@ async def delete_reception_points(
     reception_point_service: annotations.reception_point_service,
 ) -> None:
     await reception_point_service.delete_reception_point(id=reception_point_id)
-
-
-async def parse_request(
-    request: Request,
-) -> tuple[dict | None, list[tuple[str, bytes, str]] | None]:
-    body_validator = validation.MaxBodySizeValidator(const.MAX_REQUEST_BODY_SIZE)
-    data = ValueTarget()
-    parser = StreamingFormDataParser(headers=request.headers)
-
-    file_targets: dict = {}
-
-    filenames_header: str | None = request.headers.get("filenames")
-    filenames: list[str] = (
-        [unquote(f.strip()) for f in filenames_header.split(",")]
-        if filenames_header
-        else []
-    )
-
-    for filename in filenames:
-        file_target = validation.BytesTarget(
-            validator=validation.MaxSizeValidator(const.MAX_FILE_SIZE)
-        )
-        parser.register(filename, file_target)
-        file_targets[filename] = file_target
-
-    parser.register("data", data)
-
-    async for chunk in request.stream():
-        body_validator(chunk)
-        parser.data_received(chunk)
-
-    try:
-        raw_data: str | None = data.value.decode() if data.value else None
-        if raw_data and raw_data.startswith('"') and raw_data.endswith('"'):
-            raw_data = raw_data[1:-1].replace('\\"', '"')
-        data_dict: dict | None = json.loads(raw_data) if raw_data else None
-    except json.JSONDecodeError as e:
-        raise custom_exceptions.ValidationException(
-            detail=f"Invalid JSON format: {str(e)}"
-        )
-
-    uploaded_files: list = []
-    for filename, file_target in file_targets.items():
-        if file_target.content:
-            try:
-                file_extension: str = validation.FileTypeValidator.validate(
-                    file_target.content
-                ).lstrip(".")
-                uploaded_files.append((filename, file_target.content, file_extension))
-            except validation.InvalidFileTypeException as e:
-                raise custom_exceptions.ValidationException(detail=str(e))
-
-    return data_dict, uploaded_files

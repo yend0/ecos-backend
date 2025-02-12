@@ -33,17 +33,17 @@ router = APIRouter()
 async def create_waste(
     user_info: annotations.verify_token,
     waste_service: annotations.waste_service,
-    dict_file_extension: annotations.dict_file_extension,
+    data_request: annotations.data_request,
 ) -> typing.Any:
     try:
-        data, file, file_extension = dict_file_extension
+        data, uploaded_files = data_request
 
         waste_schema_request = WasteRequestCreateSchema(**data)
 
         waste: WasteModel = await waste_service.add_waste(
             waste=WasteModel(**waste_schema_request.model_dump()),
-            file=file,
-            file_extention=file_extension,
+            file=uploaded_files[1],
+            file_extention=uploaded_files[2],
         )
 
         return WasteResponseSchema(**await waste.to_dict())

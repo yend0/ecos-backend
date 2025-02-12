@@ -15,6 +15,14 @@ class ReceptionPointBaseSchema(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid")
 
 
+class ReceptionPointRequestCreateSchema(BaseModel):
+    name: str
+    address: str
+    user_id: uuid.UUID
+
+    model_config: ConfigDict = ConfigDict(extra="forbid")
+
+
 class ReceptionPointResponseSchema(ReceptionPointBaseSchema):
     id: uuid.UUID
     urls: list[HttpUrl]

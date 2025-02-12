@@ -1,6 +1,11 @@
 import enum
 
 
+class Status(enum.Enum):
+    SUCCESS: str = "SUCCESS"
+    FAILURE: str = "FAILURE"
+
+
 class RewardType(enum.Enum):
     RECYCLE_POINT_ADD: str = "Добавлен пункт"
 
