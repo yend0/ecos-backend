@@ -16,3 +16,6 @@ class WasteModel(model.AbstractModel):
             raise ValueError("Waste name cannot be empty.")
         if not isinstance(self.reception_point_id, uuid.UUID):
             raise ValueError("Invalid reception_point_id.")
+
+    def update_image_url(self, image_url: str) -> None:
+        self.image_url = image_url
