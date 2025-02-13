@@ -73,8 +73,8 @@ work_schedule_table = Table(
     mapper_registry.metadata,
     Column("id", UUID, primary_key=True, nullable=False, unique=True),
     Column("day_of_week", Enum(enums.Day), nullable=False),
-    Column("open_time", Time, nullable=False),
-    Column("close_time", Time, nullable=False),
+    Column("open_time", Time, nullable=True),
+    Column("close_time", Time, nullable=True),
     Column(
         "reception_point_id",
         UUID,
