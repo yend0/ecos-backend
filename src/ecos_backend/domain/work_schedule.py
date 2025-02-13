@@ -12,7 +12,7 @@ class WorkScheduleModel(model.AbstractModel):
     day_of_week: enums.Day
     open_time: time
     close_time: time
-    reception_point_id: uuid.UUID
+    reception_point_id: uuid.UUID = None
     id: uuid.UUID = field(default_factory=uuid.uuid4)
 
     def __post_init__(self) -> None:
