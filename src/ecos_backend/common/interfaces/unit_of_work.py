@@ -1,12 +1,13 @@
 import abc
 
-from ecos_backend.db.repositories import user, reception_point, waste
+from ecos_backend.db.repositories import user, reception_point, waste, work_schedule
 
 
 class AbstractUnitOfWork(abc.ABC):
     user: user.UserAbstractReposity
     reception_point: reception_point.ReceptionPointAbstractReposity
     waste: waste.WasteAbstractReposity
+    work_schedule: work_schedule.WorkScheduleAbstractReposity
 
     @abc.abstractmethod
     async def __aenter__(self) -> "AbstractUnitOfWork":

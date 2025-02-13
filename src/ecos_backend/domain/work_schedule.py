@@ -10,13 +10,13 @@ from ecos_backend.common import enums
 @dataclass
 class WorkScheduleModel(model.AbstractModel):
     day_of_week: enums.Day
-    open_time: time
-    close_time: time
-    reception_point_id: uuid.UUID = None
+    open_time: time | None = None
+    close_time: time | None = None
+    reception_point_id: uuid.UUID | None = None
     id: uuid.UUID = field(default_factory=uuid.uuid4)
 
     def __post_init__(self) -> None:
-        if not isinstance(self.reception_point_id, uuid.UUID):
-            raise ValueError("Invalid reception_point_id")
-        if not isinstance(self.id, uuid.UUID):
-            raise ValueError("Invalid id")
+        pass
+
+    def set_reception_point_id(self, reception_point_id: uuid.UUID) -> None:
+        self.reception_point_id = reception_point_id

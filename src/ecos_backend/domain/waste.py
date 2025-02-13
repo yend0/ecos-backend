@@ -10,7 +10,7 @@ class WasteModel(model.AbstractModel):
     name: str
     description: str
     id: uuid.UUID = field(default_factory=uuid.uuid4)
-    image_url: str = None
+    image_url: str | None = None
 
     def __post_init__(self) -> None:
         if len(self.name) < 1:

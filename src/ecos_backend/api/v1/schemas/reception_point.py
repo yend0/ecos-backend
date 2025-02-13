@@ -3,6 +3,7 @@ import datetime
 
 from pydantic import BaseModel, ConfigDict, HttpUrl
 
+from ecos_backend.api.v1.schemas import work_schedule as ws
 from ecos_backend.common import enums
 
 
@@ -18,14 +19,13 @@ class ReceptionPointBaseSchema(BaseModel):
 class ReceptionPointRequestCreateSchema(BaseModel):
     name: str
     address: str
-    user_id: uuid.UUID
-
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    work_schedules: list[ws.WorkScheduleRequestCreateSchema]
 
 
 class ReceptionPointResponseSchema(ReceptionPointBaseSchema):
     id: uuid.UUID
     urls: list[HttpUrl]
+    work_schedules: list[ws.WorkScheduleResponseSchema]
     updated_at: datetime.datetime
 
     model_config: ConfigDict = ConfigDict(from_attributes=True)

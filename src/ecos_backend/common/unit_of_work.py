@@ -4,6 +4,7 @@ from ecos_backend.common.interfaces.unit_of_work import AbstractUnitOfWork
 from ecos_backend.db.repositories.user import UserReposity
 from ecos_backend.db.repositories.reception_point import ReceptionPointReposity
 from ecos_backend.db.repositories.waste import WasteReposity
+from ecos_backend.db.repositories.work_schedule import WorkScheduleReposity
 
 
 class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
@@ -14,6 +15,7 @@ class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
         self.user = UserReposity(self._session)
         self.reception_point = ReceptionPointReposity(self._session)
         self.waste = WasteReposity(self._session)
+        self.work_schedule = WorkScheduleReposity(self._session)
 
         return await super().__aenter__()
 

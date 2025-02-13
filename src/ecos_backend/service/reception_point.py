@@ -8,6 +8,7 @@ from ecos_backend.common.interfaces.unit_of_work import AbstractUnitOfWork
 from ecos_backend.common.config import s3_config
 from ecos_backend.common import exception as custom_exceptions
 from ecos_backend.db.s3_storage import Boto3DAO
+from ecos_backend.domain.work_schedule import WorkScheduleModel
 
 
 class ReceptionPointService:
@@ -20,35 +21,43 @@ class ReceptionPointService:
         self._s3_storage: Boto3DAO = s3_storage
 
     async def add_reception_point(
-        self, reception_point: ReceptionPointModel, uploaded_files: list
+        self,
+        reception_point: ReceptionPointModel,
+        uploaded_files: list,
     ) -> ReceptionPointModel:
         async with self._uow:
-            if uploaded_files:
-                base_clean_url: str = ""
+            base_clean_url: str = ""
 
-                for uploaded_file in uploaded_files:
-                    url = self._s3_storage.upload_object(
-                        bucket_name=s3_config.RECEPTION_POINT_BUCKET,
-                        prefix=f"{str(reception_point.id)}/images",
-                        source_file_name=str(f"{uuid.uuid4()}.{uploaded_file[2]}"),
-                        content=uploaded_file[1],
-                    )
-                    base_clean_url = url.rsplit("/", 1)[0] + "/"
-
-                    reception_point.set_images_url(base_clean_url)
-
-                reception_point = await self._uow.reception_point.add(reception_point)
-                await self._uow.commit()
-
-                prefixes: list[str] = self._s3_storage.get_objects(
+            for uploaded_file in uploaded_files:
+                url = self._s3_storage.upload_object(
                     bucket_name=s3_config.RECEPTION_POINT_BUCKET,
-                    prefix=reception_point.images_url,
+                    prefix=f"{str(reception_point.id)}/images",
+                    source_file_name=str(f"{uuid.uuid4()}.{uploaded_file[2]}"),
+                    content=uploaded_file[1],
                 )
-                urls: list[str] = [
-                    f"{s3_config.ENDPOINT}/{s3_config.RECEPTION_POINT_BUCKET}/{prefix}"
-                    for prefix in prefixes
-                ]
-                reception_point.set_image_urls(urls)
+                base_clean_url = url.rsplit("/", 1)[0] + "/"
+
+                reception_point.set_images_url(base_clean_url)
+
+            await self._uow.reception_point.add(reception_point)
+
+            for i in range(0, len(reception_point.work_schedules)):
+                reception_point.work_schedules[i].set_reception_point_id(
+                    reception_point.id
+                )
+                await self._uow.work_schedule.add(reception_point.work_schedules[i])
+
+            await self._uow.commit()
+
+            prefixes: list[str] = self._s3_storage.get_objects(
+                bucket_name=s3_config.RECEPTION_POINT_BUCKET,
+                prefix=reception_point.images_url,
+            )
+            urls: list[str] = [
+                f"{s3_config.ENDPOINT}/{s3_config.RECEPTION_POINT_BUCKET}/{prefix}"
+                for prefix in prefixes
+            ]
+            reception_point.set_image_urls(urls)
 
             return reception_point
 
@@ -67,6 +76,10 @@ class ReceptionPointService:
                     for prefix in prefixes
                 ]
                 reception_point.set_image_urls(urls)
+                work_schedules: list[
+                    WorkScheduleModel
+                ] = await self._uow.work_schedule.get_all()
+                reception_point.set_work_schedules(work_schedules)
             return reception_points
 
     async def delete_reception_point(self, id: uuid.UUID) -> None:

@@ -15,12 +15,12 @@ from dataclasses import field
 class UserModel(model.AbstractModel):
     id: uuid.UUID
     email: str
-    full_name: str = None
-    birth_date: datetime.date = None
-    image_url: str = None
+    full_name: str | None = None
+    birth_date: datetime.date | None = None
+    image_url: str | None = None
     points: int = 0
-    verification_code: str = field(default=None)
-    verification_code_created_at: datetime.datetime = field(default=None)
+    verification_code: str | None = field(default=None)
+    verification_code_created_at: datetime.datetime | None = field(default=None)
 
     def __post_init__(self) -> None:
         if "@" not in self.email:

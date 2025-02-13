@@ -20,6 +20,7 @@ from ecos_backend.api.v1.schemas.reception_point import (
     ReceptionPointResponseSchema,
 )
 from ecos_backend.domain.reception_point import ReceptionPointModel
+from ecos_backend.domain.work_schedule import WorkScheduleModel
 
 router = APIRouter()
 
@@ -36,26 +37,36 @@ async def create_reception_point(
     reception_point_service: annotations.reception_point_service,
     data: annotations.data_request,
 ) -> typing.Any:
-    sub = user_info["sub"]
-
     try:
+        sub = user_info["sub"]
+
         data_dict, uploaded_files = data
 
-        data_schema = ReceptionPointRequestCreateSchema(
-            user_id=uuid.UUID(sub), **data_dict
+        data_schema = ReceptionPointRequestCreateSchema(**data_dict)
+        model = ReceptionPointModel(
+            user_id=uuid.UUID(sub),
+            work_schedules=[
+                WorkScheduleModel(**value.model_dump())
+                for value in data_schema.work_schedules
+            ],
+            **data_schema.model_dump(exclude={"work_schedules"}),
         )
 
-        print(**data_schema.model_dump())
-        # reception_point: ReceptionPointModel = (
-        #     await reception_point_service.add_reception_point(
-        #         reception_point=ReceptionPointModel(**data_schema.model_dump()),
-        #         uploaded_files=uploaded_files,
-        #     )
-        # )
+        if not uploaded_files:
+            raise custom_exceptions.ValidationException(
+                detail="At least one image is required."
+            )
 
-        # return ReceptionPointResponseSchema(
-        #     **await reception_point.to_dict(exclude={"images_url"})
-        # )
+        reception_point: ReceptionPointModel = (
+            await reception_point_service.add_reception_point(
+                reception_point=model,
+                uploaded_files=uploaded_files,
+            )
+        )
+
+        return ReceptionPointResponseSchema(
+            **await reception_point.to_dict(exclude={"images_url"})
+        )
     except ClientDisconnect:
         pass
     except validation.MaxBodySizeException as e:
