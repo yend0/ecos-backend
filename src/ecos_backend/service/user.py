@@ -12,7 +12,7 @@ from ecos_backend.common.exception import (
 from ecos_backend.common.unit_of_work import AbstractUnitOfWork
 from ecos_backend.common.config import s3_config
 from ecos_backend.service.email import EmailService
-from ecos_backend.domain.user import UserModel
+from ecos_backend.models.user import UserModel
 from ecos_backend.db.s3_storage import Boto3DAO
 
 from keycloak import KeycloakAdmin, KeycloakPostError, KeycloakPutError

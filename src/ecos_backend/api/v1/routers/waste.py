@@ -18,7 +18,7 @@ from ecos_backend.api.v1.schemas.waste import (
     WasteRequestCreateSchema,
     WasteResponseSchema,
 )
-from ecos_backend.domain.waste import WasteModel
+from ecos_backend.models.waste import WasteDTO
 
 router = APIRouter()
 
@@ -40,10 +40,10 @@ async def create_waste(
 
         waste_schema_request = WasteRequestCreateSchema(**data)
 
-        waste: WasteModel = await waste_service.add_waste(
-            waste=WasteModel(**waste_schema_request.model_dump()),
-            file=uploaded_files[1],
-            file_extention=uploaded_files[2],
+        waste: WasteDTO = await waste_service.add_waste(
+            waste=WasteDTO(**waste_schema_request.model_dump()),
+            file=uploaded_files[0][1],
+            file_extention=uploaded_files[0][2],
         )
 
         return WasteResponseSchema(**await waste.to_dict())
@@ -69,7 +69,7 @@ async def create_waste(
 async def get_wastes(
     waste_service: annotations.waste_service,
 ) -> typing.Any:
-    waste_list: list[WasteModel] = await waste_service.get_wastes()
+    waste_list: list[WasteDTO] = await waste_service.get_wastes()
 
     return [WasteResponseSchema(**await rp.to_dict()) for rp in waste_list]
 

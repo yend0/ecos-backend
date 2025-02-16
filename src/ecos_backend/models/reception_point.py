@@ -6,17 +6,17 @@ from datetime import datetime
 
 from ecos_backend.common.interfaces import model
 from ecos_backend.common import enums
-from ecos_backend.domain import work_schedule as ws
+from ecos_backend.models import work_schedule as ws
 
 
 @dataclass
-class ReceptionPointModel(model.AbstractModel):
+class ReceptionPointDTO(model.AbstractModel):
     name: str
     address: str
     user_id: uuid.UUID
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     urls: list[str] = field(default_factory=list)
-    work_schedules: list[ws.WorkScheduleModel] = field(default_factory=list)
+    work_schedules: list[ws.WorkScheduleDTO] = field(default_factory=list)
     status: enums.PointStatus | None = None
     images_url: str | None = None
     updated_at: datetime | None = None
@@ -31,5 +31,5 @@ class ReceptionPointModel(model.AbstractModel):
     def set_image_urls(self, urls: list[str]) -> None:
         self.urls = urls
 
-    def set_work_schedules(self, work_schedules: list[ws.WorkScheduleModel]) -> None:
+    def set_work_schedules(self, work_schedules: list[ws.WorkScheduleDTO]) -> None:
         self.work_schedules = work_schedules

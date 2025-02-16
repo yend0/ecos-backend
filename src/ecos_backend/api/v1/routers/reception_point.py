@@ -19,8 +19,8 @@ from ecos_backend.api.v1.schemas.reception_point import (
     ReceptionPointRequestCreateSchema,
     ReceptionPointResponseSchema,
 )
-from ecos_backend.domain.reception_point import ReceptionPointModel
-from ecos_backend.domain.work_schedule import WorkScheduleModel
+from ecos_backend.models.reception_point import ReceptionPointDTO
+from ecos_backend.models.work_schedule import WorkScheduleDTO
 
 router = APIRouter()
 
@@ -43,10 +43,10 @@ async def create_reception_point(
         data_dict, uploaded_files = data
 
         data_schema = ReceptionPointRequestCreateSchema(**data_dict)
-        model = ReceptionPointModel(
+        model = ReceptionPointDTO(
             user_id=uuid.UUID(sub),
             work_schedules=[
-                WorkScheduleModel(**value.model_dump())
+                WorkScheduleDTO(**value.model_dump())
                 for value in data_schema.work_schedules
             ],
             **data_schema.model_dump(exclude={"work_schedules"}),
@@ -57,7 +57,7 @@ async def create_reception_point(
                 detail="At least one image is required."
             )
 
-        reception_point: ReceptionPointModel = (
+        reception_point: ReceptionPointDTO = (
             await reception_point_service.add_reception_point(
                 reception_point=model,
                 uploaded_files=uploaded_files,
@@ -90,7 +90,7 @@ async def get_reception_points(
     reception_point_service: annotations.reception_point_service,
 ) -> typing.Any:
     reception_points: list[
-        ReceptionPointModel
+        ReceptionPointDTO
     ] = await reception_point_service.get_reception_points()
     return [
         ReceptionPointResponseSchema(**await rp.to_dict(exclude={"images_url"}))

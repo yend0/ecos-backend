@@ -10,7 +10,7 @@ from starlette.requests import ClientDisconnect
 from streaming_form_data.validators import ValidationError
 
 
-from ecos_backend.domain import user as user_models
+from ecos_backend.models import user as user_models
 from ecos_backend.common import config, enums, exception as custom_exceptions
 from ecos_backend.common import validation
 from ecos_backend.common import constatnts as const

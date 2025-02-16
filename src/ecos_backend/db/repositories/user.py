@@ -8,7 +8,7 @@ from ecos_backend.common.interfaces.repository import (
     AbstractRepository,
     AbstractSqlRepository,
 )
-from ecos_backend.domain.user import UserModel
+from ecos_backend.models.user import UserModel
 
 from sqlalchemy.ext import asyncio
 

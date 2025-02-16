@@ -3,12 +3,12 @@ import uuid
 
 from urllib.parse import urlparse
 
-from ecos_backend.domain.reception_point import ReceptionPointModel
+from ecos_backend.models.reception_point import ReceptionPointDTO
+from ecos_backend.models.work_schedule import WorkScheduleDTO
 from ecos_backend.common.interfaces.unit_of_work import AbstractUnitOfWork
 from ecos_backend.common.config import s3_config
 from ecos_backend.common import exception as custom_exceptions
 from ecos_backend.db.s3_storage import Boto3DAO
-from ecos_backend.domain.work_schedule import WorkScheduleModel
 
 
 class ReceptionPointService:
@@ -22,9 +22,9 @@ class ReceptionPointService:
 
     async def add_reception_point(
         self,
-        reception_point: ReceptionPointModel,
+        reception_point: ReceptionPointDTO,
         uploaded_files: list,
-    ) -> ReceptionPointModel:
+    ) -> ReceptionPointDTO:
         async with self._uow:
             base_clean_url: str = ""
 
@@ -61,10 +61,10 @@ class ReceptionPointService:
 
             return reception_point
 
-    async def get_reception_points(self) -> list[ReceptionPointModel]:
+    async def get_reception_points(self) -> list[ReceptionPointDTO]:
         async with self._uow:
             reception_points: list[
-                ReceptionPointModel
+                ReceptionPointDTO
             ] = await self._uow.reception_point.get_all()
             for reception_point in reception_points:
                 prefixes: list[str] = self._s3_storage.get_objects(
@@ -77,15 +77,15 @@ class ReceptionPointService:
                 ]
                 reception_point.set_image_urls(urls)
                 work_schedules: list[
-                    WorkScheduleModel
+                    WorkScheduleDTO
                 ] = await self._uow.work_schedule.get_all()
                 reception_point.set_work_schedules(work_schedules)
             return reception_points
 
     async def delete_reception_point(self, id: uuid.UUID) -> None:
         async with self._uow:
-            reception_point: ReceptionPointModel = (
-                await self.get_reception_points_by_id(id)
+            reception_point: ReceptionPointDTO = await self.get_reception_points_by_id(
+                id
             )
             if reception_point is not None:
                 for url in reception_point.urls:
@@ -103,10 +103,10 @@ class ReceptionPointService:
 
     async def get_reception_points_by_id(
         self, id: uuid.UUID
-    ) -> ReceptionPointModel | None:
+    ) -> ReceptionPointDTO | None:
         async with self._uow:
             reception_point: (
-                ReceptionPointModel | None
+                ReceptionPointDTO | None
             ) = await self._uow.reception_point.get_by_id(id=id)
             if not reception_point:
                 return None

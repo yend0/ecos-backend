@@ -3,7 +3,7 @@ import uuid
 
 from urllib.parse import urlparse
 
-from ecos_backend.domain.waste import WasteModel
+from ecos_backend.models.waste import WasteDTO
 from ecos_backend.common.interfaces.unit_of_work import AbstractUnitOfWork
 from ecos_backend.common.config import s3_config
 from ecos_backend.common import exception as custom_exceptions
@@ -21,10 +21,10 @@ class WasteService:
 
     async def add_waste(
         self,
-        waste: WasteModel,
+        waste: WasteDTO,
         file: bytes = None,
         file_extention: str = None,
-    ) -> WasteModel:
+    ) -> WasteDTO:
         async with self._uow:
             if file_extention is not None:
                 try:
@@ -43,9 +43,9 @@ class WasteService:
             await self._uow.commit()
             return waste
 
-    async def get_wastes(self) -> list[WasteModel]:
+    async def get_wastes(self) -> list[WasteDTO]:
         async with self._uow:
-            wastes: list[WasteModel] = await self._uow.waste.get_all()
+            wastes: list[WasteDTO] = await self._uow.waste.get_all()
             for waste in wastes:
                 prefixes: list[str] = self._s3_storage.get_objects(
                     bucket_name=s3_config.WASTE_BUCKET,
@@ -58,7 +58,7 @@ class WasteService:
 
     async def delete_waste(self, id: uuid.UUID) -> None:
         async with self._uow:
-            waste: WasteModel = await self.get_waste_by_id(id)
+            waste: WasteDTO = await self.get_waste_by_id(id)
             if waste is not None:
                 self._s3_storage.delete_object(
                     bucket_name=s3_config.WASTE_BUCKET,
@@ -70,9 +70,9 @@ class WasteService:
             else:
                 raise custom_exceptions.NotFoundException(detail="Waste not found.")
 
-    async def get_waste_by_id(self, id: uuid.UUID) -> WasteModel | None:
+    async def get_waste_by_id(self, id: uuid.UUID) -> WasteDTO | None:
         async with self._uow:
-            waste: WasteModel | None = await self._uow.waste.get_by_id(id=id)
+            waste: WasteDTO | None = await self._uow.waste.get_by_id(id=id)
             if not waste:
                 return None
             prefixes: list[str] = self._s3_storage.get_objects(

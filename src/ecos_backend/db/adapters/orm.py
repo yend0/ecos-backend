@@ -143,34 +143,34 @@ drop_off_point_waste_table = Table(
 
 
 def start_mappers() -> None:
-    from ecos_backend.domain.user import UserModel
-    from ecos_backend.domain.accrual_history import AccrualHistoryModel
-    from ecos_backend.domain.drop_off_point_waste import DropOffPointWasteModel
-    from ecos_backend.domain.reception_point import ReceptionPointModel
-    from ecos_backend.domain.waste import WasteModel
-    from ecos_backend.domain.work_schedule import WorkScheduleModel
+    from ecos_backend.models.user import UserModel
+    from ecos_backend.models.accrual_history import AccrualHistoryDTO
+    from ecos_backend.models.drop_off_point_waste import DropOffPointWasteDTO
+    from ecos_backend.models.reception_point import ReceptionPointDTO
+    from ecos_backend.models.waste import WasteDTO
+    from ecos_backend.models.work_schedule import WorkScheduleDTO
 
     mapper_registry.map_imperatively(
         class_=UserModel,
         local_table=user_table,
     )
     mapper_registry.map_imperatively(
-        class_=AccrualHistoryModel,
+        class_=AccrualHistoryDTO,
         local_table=accrual_history_table,
     )
     mapper_registry.map_imperatively(
-        class_=WorkScheduleModel,
+        class_=WorkScheduleDTO,
         local_table=work_schedule_table,
     )
     mapper_registry.map_imperatively(
-        class_=WasteModel,
+        class_=WasteDTO,
         local_table=waste_table,
     )
     mapper_registry.map_imperatively(
-        class_=ReceptionPointModel,
+        class_=ReceptionPointDTO,
         local_table=reception_point_table,
     )
     mapper_registry.map_imperatively(
-        class_=DropOffPointWasteModel,
+        class_=DropOffPointWasteDTO,
         local_table=drop_off_point_waste_table,
     )
