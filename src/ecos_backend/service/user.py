@@ -11,6 +11,7 @@ from ecos_backend.common.exception import (
 )
 from ecos_backend.common.unit_of_work import AbstractUnitOfWork
 from ecos_backend.common.config import s3_config
+from ecos_backend.common import constatnts
 from ecos_backend.service.email import EmailService
 from ecos_backend.models.user import UserModel
 from ecos_backend.db.s3_storage import Boto3DAO
@@ -43,7 +44,7 @@ class UserService:
 
                 token: str = user.generate_verification_code()
 
-                url: str = f"{request.url.scheme}://{request.client.host}:{request.url.port}/api/v1/user/verify-email/{token}"
+                url: str = f"{request.url.scheme}://{request.client.host}:{request.url.port}{constatnts.VERIFY_EMAIL_PATH}{token}"
 
                 await EmailService(url=url, email=[user.email]).sendVerificationCode()
 
@@ -86,7 +87,7 @@ class UserService:
         async with self._uow:
             try:
                 token: str = user.generate_verification_code()
-                url: str = f"{request.url.scheme}://{request.client.host}:{request.url.port}/api/v1/user/verify-email/{token.hex()}"
+                url: str = f"{request.url.scheme}://{request.client.host}:{request.url.port}{constatnts.VERIFY_EMAIL_PATH}{token.hex()}"
 
                 await EmailService(url=url, email=[user.email]).sendVerificationCode()
 

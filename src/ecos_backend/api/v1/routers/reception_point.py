@@ -98,6 +98,19 @@ async def get_reception_points(
     ]
 
 
+@router.get(
+    "/{reception_point_id}",
+    summary="Get reception point by id",
+    response_description="Reception point retrieved successfully",
+    response_model=ReceptionPointResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def get_reception_point(
+    reception_point: annotations.reception_point_by_id,
+) -> typing.Any:
+    return reception_point
+
+
 @router.delete(
     "/{reception_point_id}",
     summary="Delete reception point",
@@ -110,3 +123,29 @@ async def delete_reception_points(
     reception_point_service: annotations.reception_point_service,
 ) -> None:
     await reception_point_service.delete_reception_point(id=reception_point_id)
+
+
+@router.post(
+    "/{reception_point_id}/wastes/{waste_id}",
+    summary="Add waste to reception",
+    response_description="Waste added to reception point successfully",
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_waste_to_reception_point(
+    user_info: annotations.verify_token,
+    waste_service: annotations.waste_service,
+) -> None:
+    pass
+
+
+@router.delete(
+    "/{reception_point_id}/wastes/{waste_id}",
+    summary="Delete waste from reception point",
+    response_description="Waste deleted from reception point successfully",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_waste_from_reception_point(
+    user_info: annotations.verify_token,
+    waste_service: annotations.waste_service,
+) -> None:
+    pass

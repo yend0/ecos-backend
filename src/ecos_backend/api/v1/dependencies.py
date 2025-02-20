@@ -2,8 +2,9 @@ import json
 import typing
 
 from urllib.parse import unquote
+import uuid
 
-from fastapi import Depends, Security, Request
+from fastapi import Depends, Path, Security, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,8 +15,10 @@ from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.targets import ValueTarget
 
 
+from ecos_backend.api.v1.schemas.waste import WasteResponseSchema
 from ecos_backend.db import s3_storage
 from ecos_backend.db import database
+
 from ecos_backend.common import config
 from ecos_backend.common import validation
 from ecos_backend.common import constatnts as const
@@ -27,10 +30,13 @@ from ecos_backend.common.keycloak_adapters import (
     KeycloakClientAdapter,
 )
 
+from ecos_backend.models.reception_point import ReceptionPointDTO
+from ecos_backend.models.waste import WasteDTO
 from ecos_backend.service.user import UserService
 from ecos_backend.service.reception_point import ReceptionPointService
 from ecos_backend.service.waste import WasteService
 
+from ecos_backend.api.v1.schemas.reception_point import ReceptionPointResponseSchema
 
 bearer_scheme = HTTPBearer()
 
@@ -140,3 +146,37 @@ async def parse_request(
                 raise custom_exceptions.ValidationException(detail=str(e))
 
     return data_dict, uploaded_files
+
+
+async def reception_point_by_id(
+    reception_point_id: typing.Annotated[uuid.UUID, Path],
+    reception_point_service: typing.Annotated[
+        ReceptionPointService, Depends(get_reception_point_service)
+    ],
+) -> ReceptionPointResponseSchema:
+    reception_point: (
+        ReceptionPointDTO | None
+    ) = await reception_point_service.get_reception_point_by_id(reception_point_id)
+
+    if reception_point is None:
+        raise custom_exceptions.NotFoundException(
+            detail=f"Reception point with ${reception_point_id} id not found."
+        )
+
+    return ReceptionPointResponseSchema(
+        **await reception_point.to_dict(exclude={"images_url"})
+    )
+
+
+async def waste_by_id(
+    waste_id: typing.Annotated[uuid.UUID, Path],
+    waste_service: typing.Annotated[WasteService, Depends(get_waste_service)],
+) -> ReceptionPointResponseSchema:
+    waste: WasteDTO | None = await waste_service.get_waste_by_id(waste_id)
+
+    if waste is None:
+        raise custom_exceptions.NotFoundException(
+            detail=f"Waste with ${waste_id} id not found."
+        )
+
+    return WasteResponseSchema(**await waste.to_dict())

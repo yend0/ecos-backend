@@ -65,7 +65,7 @@ class WasteService:
                     prefix=f"{str(waste.id)}/image",
                     source_file_name=os.path.basename(urlparse(waste.image_url).path),
                 )
-                await self._uow.waste.delete(waste=waste)
+                await self._uow.waste.delete(waste.id)
                 await self._uow.commit()
             else:
                 raise custom_exceptions.NotFoundException(detail="Waste not found.")

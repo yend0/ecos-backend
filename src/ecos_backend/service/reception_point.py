@@ -4,7 +4,6 @@ import uuid
 from urllib.parse import urlparse
 
 from ecos_backend.models.reception_point import ReceptionPointDTO
-from ecos_backend.models.work_schedule import WorkScheduleDTO
 from ecos_backend.common.interfaces.unit_of_work import AbstractUnitOfWork
 from ecos_backend.common.config import s3_config
 from ecos_backend.common import exception as custom_exceptions
@@ -76,15 +75,11 @@ class ReceptionPointService:
                     for prefix in prefixes
                 ]
                 reception_point.set_image_urls(urls)
-                work_schedules: list[
-                    WorkScheduleDTO
-                ] = await self._uow.work_schedule.get_all()
-                reception_point.set_work_schedules(work_schedules)
             return reception_points
 
     async def delete_reception_point(self, id: uuid.UUID) -> None:
         async with self._uow:
-            reception_point: ReceptionPointDTO = await self.get_reception_points_by_id(
+            reception_point: ReceptionPointDTO = await self.get_reception_point_by_id(
                 id
             )
             if reception_point is not None:
@@ -94,14 +89,14 @@ class ReceptionPointService:
                         prefix=reception_point.images_url,
                         source_file_name=os.path.basename(urlparse(url).path),
                     )
-                await self._uow.reception_point.delete(reception_point=reception_point)
+                await self._uow.reception_point.delete(reception_point.id)
                 await self._uow.commit()
             else:
                 raise custom_exceptions.NotFoundException(
                     detail="Reception point not found."
                 )
 
-    async def get_reception_points_by_id(
+    async def get_reception_point_by_id(
         self, id: uuid.UUID
     ) -> ReceptionPointDTO | None:
         async with self._uow:
