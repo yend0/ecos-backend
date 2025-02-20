@@ -95,6 +95,7 @@ waste_table = Table(
     ),
     Column("name", String(32), nullable=False),
     Column("description", Text, nullable=False),
+    Column("abbreviated_name", String(32), nullable=False, unique=True),
     Column("image_url", String(255), nullable=True, unique=True),
 )
 
@@ -103,6 +104,7 @@ reception_point_table = Table(
     mapper_registry.metadata,
     Column("id", UUID, primary_key=True, nullable=False, unique=True),
     Column("name", String(255), nullable=False),
+    Column("description", Text, nullable=True),
     Column("address", String(255), nullable=False, unique=True),
     Column("images_url", String(255), nullable=True, unique=True),
     Column(
