@@ -17,6 +17,7 @@ class ReceptionPointDTO(model.AbstractModel):
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     urls: list[str] = field(default_factory=list)
     work_schedules: list[ws.WorkScheduleDTO] = field(default_factory=list)
+    description: str | None = None
     status: enums.PointStatus | None = None
     images_url: str | None = None
     updated_at: datetime | None = None

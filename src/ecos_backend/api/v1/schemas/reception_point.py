@@ -10,6 +10,7 @@ from ecos_backend.common import enums
 class ReceptionPointBaseSchema(BaseModel):
     name: str
     address: str
+    description: str | None
     user_id: uuid.UUID
     status: enums.PointStatus
 
@@ -19,6 +20,7 @@ class ReceptionPointBaseSchema(BaseModel):
 class ReceptionPointRequestCreateSchema(BaseModel):
     name: str
     address: str
+    description: str | None
     work_schedules: list[ws.WorkScheduleRequestCreateSchema]
 
 

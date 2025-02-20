@@ -9,6 +9,7 @@ from ecos_backend.common.interfaces import model
 class WasteDTO(model.AbstractModel):
     name: str
     description: str
+    abbreviated_name: str
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     image_url: str | None = None
 

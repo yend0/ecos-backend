@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, HttpUrl
 class WasteBaseSchema(BaseModel):
     name: str
     description: str
+    abbreviated_name: str
 
     model_config: ConfigDict = ConfigDict(extra="forbid")
 
