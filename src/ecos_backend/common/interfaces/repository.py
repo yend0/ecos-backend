@@ -12,7 +12,7 @@ class AbstractRepository(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    async def get_all(self, **filters) -> list[AbstractModel]:
+    async def get_all(self, filters: str | None) -> list[AbstractModel]:
         raise NotImplementedError()
 
     @abc.abstractmethod

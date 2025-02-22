@@ -19,6 +19,7 @@ from ecos_backend.api.v1.schemas.reception_point import (
     ReceptionPointRequestCreateSchema,
     ReceptionPointResponseSchema,
 )
+from ecos_backend.models.drop_off_point_waste import DropOffPointWasteDTO
 from ecos_backend.models.reception_point import ReceptionPointDTO
 from ecos_backend.models.work_schedule import WorkScheduleDTO
 
@@ -88,10 +89,11 @@ async def create_reception_point(
 )
 async def get_reception_points(
     reception_point_service: annotations.reception_point_service,
+    search_filter: annotations.search_filter = None,
 ) -> typing.Any:
     reception_points: list[
         ReceptionPointDTO
-    ] = await reception_point_service.get_reception_points()
+    ] = await reception_point_service.get_reception_points(filters=search_filter)
     return [
         ReceptionPointResponseSchema(**await rp.to_dict(exclude={"images_url"}))
         for rp in reception_points
@@ -133,9 +135,18 @@ async def delete_reception_points(
 )
 async def add_waste_to_reception_point(
     user_info: annotations.verify_token,
-    waste_service: annotations.waste_service,
+    reception_point: annotations.reception_point_by_id,
+    waste: annotations.waste_by_id,
+    reception_point_service: annotations.reception_point_service,
 ) -> None:
-    pass
+    try:
+        drop_off_point_waste = DropOffPointWasteDTO(
+            reception_point_id=reception_point.id, waste_id=waste.id
+        )
+
+        await reception_point_service.add_drop_off_point_waste(drop_off_point_waste)
+    except Exception:
+        raise custom_exceptions.ValidationException(detail="Duplicate ID")
 
 
 @router.delete(
@@ -146,6 +157,11 @@ async def add_waste_to_reception_point(
 )
 async def delete_waste_from_reception_point(
     user_info: annotations.verify_token,
-    waste_service: annotations.waste_service,
+    reception_point: annotations.reception_point_by_id,
+    waste: annotations.waste_by_id,
+    reception_point_service: annotations.reception_point_service,
 ) -> None:
-    pass
+    drop_off_point_waste = DropOffPointWasteDTO(
+        reception_point_id=reception_point.id, waste_id=waste.id
+    )
+    await reception_point_service.delete_drop_off_point_waste(drop_off_point_waste)

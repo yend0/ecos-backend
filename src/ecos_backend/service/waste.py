@@ -43,9 +43,9 @@ class WasteService:
             await self._uow.commit()
             return waste
 
-    async def get_wastes(self) -> list[WasteDTO]:
+    async def get_wastes(self, filters: str | None = None) -> list[WasteDTO]:
         async with self._uow:
-            wastes: list[WasteDTO] = await self._uow.waste.get_all()
+            wastes: list[WasteDTO] = await self._uow.waste.get_all(filters=filters)
             for waste in wastes:
                 prefixes: list[str] = self._s3_storage.get_objects(
                     bucket_name=s3_config.WASTE_BUCKET,

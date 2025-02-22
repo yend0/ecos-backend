@@ -68,8 +68,9 @@ async def create_waste(
 )
 async def get_wastes(
     waste_service: annotations.waste_service,
+    search_filter: annotations.search_filter = None,
 ) -> typing.Any:
-    waste_list: list[WasteDTO] = await waste_service.get_wastes()
+    waste_list: list[WasteDTO] = await waste_service.get_wastes(filters=search_filter)
 
     return [WasteResponseSchema(**await rp.to_dict()) for rp in waste_list]
 
@@ -99,29 +100,3 @@ async def delete_waste(
     waste_id: typing.Annotated[uuid.UUID, Path],
 ) -> None:
     await waste_service.delete_waste(waste_id)
-
-
-@router.post(
-    "/{waste_id}/reception-points/{reception_point_id}",
-    summary="Add reception point to waste",
-    response_description="Reception point added to waste successfully",
-    status_code=status.HTTP_201_CREATED,
-)
-async def add_reception_point_to_waste(
-    user_info: annotations.verify_token,
-    waste_service: annotations.waste_service,
-) -> None:
-    pass
-
-
-@router.delete(
-    "/{waste_id}/reception-points/{reception_point_id}",
-    summary="Delete reception point from waste",
-    response_description="Reception point deleted from waste successfully",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-async def delete_reception_point_from_waste(
-    user_info: annotations.verify_token,
-    waste_service: annotations.waste_service,
-) -> None:
-    pass

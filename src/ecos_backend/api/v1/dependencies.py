@@ -160,7 +160,7 @@ async def reception_point_by_id(
 
     if reception_point is None:
         raise custom_exceptions.NotFoundException(
-            detail=f"Reception point with ${reception_point_id} id not found."
+            detail=f"Reception point with {reception_point_id} id not found."
         )
 
     return ReceptionPointResponseSchema(
@@ -176,7 +176,7 @@ async def waste_by_id(
 
     if waste is None:
         raise custom_exceptions.NotFoundException(
-            detail=f"Waste with ${waste_id} id not found."
+            detail=f"Waste with {waste_id} id not found."
         )
 
     return WasteResponseSchema(**await waste.to_dict())

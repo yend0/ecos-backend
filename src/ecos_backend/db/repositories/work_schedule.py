@@ -22,8 +22,8 @@ class WorkScheduleReposity(AbstractSqlRepository, WorkScheduleAbstractReposity):
         result: Result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_all(self, **filters) -> list[WorkScheduleDTO]:
-        stmt: Select = self._construct_get_all_stmt(**filters)
+    async def get_all(self, filters: str | None = None) -> list[WorkScheduleDTO]:
+        stmt: Select = self._construct_get_all_stmt(filters)
         result: Result = await self._session.execute(stmt)
         return result.scalars().all()
 
@@ -42,17 +42,27 @@ class WorkScheduleReposity(AbstractSqlRepository, WorkScheduleAbstractReposity):
         stmt: Select = select(WorkScheduleDTO).where(orm.work_schedule_table.c.id == id)
         return stmt
 
-    def _construct_get_all_stmt(self, **filters) -> Select:
+    def _construct_get_all_stmt(self, filters: str | None = None) -> Select:
         stmt: Select = select(WorkScheduleDTO)
         where_clauses: list = []
 
-        for c, v in filters.items():
-            if not hasattr(orm.work_schedule_table.c, c):
-                raise ValueError(f"Invalid column name {c}")
-            where_clauses.append(getattr(orm.work_schedule_table.c, c) == v)
+        if filters:
+            try:
+                criteria = dict(x.split("*") for x in filters.split("-"))
+            except ValueError:
+                raise ValueError(
+                    "Invalid filter format. Expected 'key1*value1-key2*value2'"
+                )
 
-        if len(where_clauses) == 1:
-            stmt = stmt.where(where_clauses[0])
-        elif len(where_clauses) > 1:
+            for column_name, value in criteria.items():
+                if not hasattr(orm.work_schedule_table.c, column_name):
+                    raise ValueError(f"Invalid column name {column_name}")
+
+                where_clauses.append(
+                    getattr(orm.work_schedule_table.c, column_name).like(f"%{value}%")
+                )
+
+        if where_clauses:
             stmt = stmt.where(and_(*where_clauses))
+
         return stmt

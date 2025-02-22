@@ -1,6 +1,6 @@
 import typing
 
-from fastapi import Depends, Form
+from fastapi import Depends, Form, Query
 
 
 from ecos_backend.api.v1 import dependencies
@@ -13,6 +13,7 @@ from ecos_backend.service.waste import WasteService
 
 
 user_create_schema = typing.Annotated[user_schemas.UserRequestCreateSchema, Form()]
+search_filter = typing.Annotated[typing.Optional[str], Query(alias="filter")]
 
 user_service = typing.Annotated[UserService, Depends(dependencies.get_user_service)]
 reception_point_service = typing.Annotated[

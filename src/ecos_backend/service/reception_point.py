@@ -4,6 +4,8 @@ import uuid
 from urllib.parse import urlparse
 
 from ecos_backend.models.reception_point import ReceptionPointDTO
+from ecos_backend.models.drop_off_point_waste import DropOffPointWasteDTO
+
 from ecos_backend.common.interfaces.unit_of_work import AbstractUnitOfWork
 from ecos_backend.common.config import s3_config
 from ecos_backend.common import exception as custom_exceptions
@@ -60,11 +62,13 @@ class ReceptionPointService:
 
             return reception_point
 
-    async def get_reception_points(self) -> list[ReceptionPointDTO]:
+    async def get_reception_points(
+        self, filters: str | None = None
+    ) -> list[ReceptionPointDTO]:
         async with self._uow:
             reception_points: list[
                 ReceptionPointDTO
-            ] = await self._uow.reception_point.get_all()
+            ] = await self._uow.reception_point.get_all(filters)
             for reception_point in reception_points:
                 prefixes: list[str] = self._s3_storage.get_objects(
                     bucket_name=s3_config.RECEPTION_POINT_BUCKET,
@@ -115,3 +119,24 @@ class ReceptionPointService:
             ]
             reception_point.set_image_urls(urls)
             return reception_point
+
+    async def add_drop_off_point_waste(
+        self,
+        drop_off_point_wast: DropOffPointWasteDTO,
+    ) -> None:
+        async with self._uow:
+            await self._uow.reception_point.add_drop_off_point_waste(
+                drop_off_point_wast
+            )
+            await self._uow.commit()
+
+    async def delete_drop_off_point_waste(
+        self,
+        drop_off_point_wast: DropOffPointWasteDTO,
+    ) -> None:
+        async with self._uow:
+            await self._uow.reception_point.delete_drop_off_point_waste(
+                waste_id=drop_off_point_wast.waste_id,
+                reception_point_id=drop_off_point_wast.reception_point_id,
+            )
+            await self._uow.commit()

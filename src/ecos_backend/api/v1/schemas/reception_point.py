@@ -28,6 +28,7 @@ class ReceptionPointResponseSchema(ReceptionPointBaseSchema):
     id: uuid.UUID
     urls: list[HttpUrl]
     work_schedules: list[ws.WorkScheduleResponseSchema]
+    waste_ids: list[uuid.UUID]
     updated_at: datetime.datetime
 
     model_config: ConfigDict = ConfigDict(from_attributes=True)
