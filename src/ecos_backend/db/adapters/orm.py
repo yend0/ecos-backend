@@ -143,6 +143,32 @@ drop_off_point_waste_table = Table(
     ),
 )
 
+moderation_table = Table(
+    "Moderation",
+    mapper_registry.metadata,
+    Column("id", UUID, primary_key=True, nullable=False, unique=True),
+    Column("comment", Text, nullable=True),
+    Column(
+        "verification_date",
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
+    Column(
+        "user_id",
+        UUID,
+        ForeignKey("User.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column(
+        "reception_point_id",
+        UUID,
+        ForeignKey("Reception_Point.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+    ),
+)
+
 
 def start_mappers() -> None:
     from ecos_backend.models.user import UserModel
@@ -151,6 +177,7 @@ def start_mappers() -> None:
     from ecos_backend.models.reception_point import ReceptionPointDTO
     from ecos_backend.models.waste import WasteDTO
     from ecos_backend.models.work_schedule import WorkScheduleDTO
+    from ecos_backend.models.moderation import ModerationDTO
 
     mapper_registry.map_imperatively(
         class_=UserModel,
@@ -175,4 +202,8 @@ def start_mappers() -> None:
     mapper_registry.map_imperatively(
         class_=DropOffPointWasteDTO,
         local_table=drop_off_point_waste_table,
+    )
+    mapper_registry.map_imperatively(
+        class_=ModerationDTO,
+        local_table=moderation_table,
     )
