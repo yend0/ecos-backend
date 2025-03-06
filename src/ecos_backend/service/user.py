@@ -37,24 +37,16 @@ class UserService:
         request: Request,
     ) -> UserModel:
         async with self._uow:
-            try:
-                user: UserModel = await self._create_user_in_keycloak(
-                    username, password
-                )
+            user: UserModel = await self._create_user_in_keycloak(username, password)
 
-                token: str = user.generate_verification_code()
+            token: str = user.generate_verification_code()
 
-                url: str = f"{request.url.scheme}://{request.client.host}:{request.url.port}{constatnts.VERIFY_EMAIL_PATH}{token}"
+            url: str = f"{request.url.scheme}://{request.client.host}:{request.url.port}{constatnts.VERIFY_EMAIL_PATH}{token}"
 
-                await EmailService(url=url, email=[user.email]).sendVerificationCode()
+            await EmailService(url=url, email=[user.email]).sendVerificationCode()
 
-                await self._uow.user.add(user)
-                await self._uow.commit()
-                return user
-
-            except Exception as e:
-                await self._admin.a_delete_user(user.id)
-                raise e
+            user: UserModel = await self._register_user_in_database(user=user)
+            return user
 
     async def get_account_information(
         self, id: uuid.UUID
@@ -151,6 +143,15 @@ class UserService:
             )
         except KeycloakPutError as e:
             raise InternalServerException(detail="Failed to verify email") from e
+
+    async def _register_user_in_database(self, user: UserModel) -> UserModel:
+        try:
+            await self._uow.user.add(user)
+            await self._uow.commit()
+            return user
+        except Exception as e:
+            await self._admin.a_delete_user(user.id)
+            raise e
 
     def _compute_verification_code_from_token(self, token) -> str:
         hashedCode: hashlib._Hash = hashlib.sha256()
