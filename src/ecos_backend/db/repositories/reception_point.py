@@ -2,7 +2,7 @@ import abc
 from collections import defaultdict
 import uuid
 
-from sqlalchemy import delete, join, or_, select
+from sqlalchemy import delete, join, or_, select, update
 
 
 from ecos_backend.common.interfaces.model import AbstractModel
@@ -194,10 +194,31 @@ class ReceptionPointReposity(AbstractSqlRepository, AbstractRepository):
         return [ReceptionPointDTO(**data) for data in reception_points_map.values()]
 
     async def add(self, model: ReceptionPointDTO) -> ReceptionPointDTO:
-        self._session.add(model)
-        await self._session.flush()
-        await self._session.refresh(model)
-        return model
+        existing_entry: ReceptionPointDTO | None = await self.get_by_id(model.id)
+
+        if existing_entry:
+            stmt = (
+                update(orm.reception_point_table)
+                .where(orm.reception_point_table.c.id == model.id)
+                .values(
+                    name=model.name,
+                    address=model.address,
+                    user_id=model.user_id,
+                    status=model.status,
+                    description=model.description,
+                    images_url=model.images_url,
+                )
+                .returning(orm.reception_point_table)
+            )
+            result = await self._session.execute(stmt)
+            updated_row = result.fetchone()
+            if updated_row:
+                return model
+        else:
+            self._session.add(model)
+            await self._session.flush()
+            await self._session.refresh(model)
+            return model
 
     async def add_drop_off_point_waste(
         self, model: DropOffPointWasteDTO

@@ -165,3 +165,37 @@ async def delete_waste_from_reception_point(
         reception_point_id=reception_point.id, waste_id=waste.id
     )
     await reception_point_service.delete_drop_off_point_waste(drop_off_point_waste)
+
+
+@router.patch(
+    "/{reception_point_id}/status",
+    summary="Update reception point status",
+    response_description="Reception point status updated successfully",
+    response_model=ReceptionPointResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def update_reception_point_status(
+    user_info: annotations.verify_token,
+    data: annotations.moderation_create_schema,
+    reception_point_id: typing.Annotated[uuid.UUID, Path],
+    reception_point_service: annotations.reception_point_service,
+) -> typing.Any:
+    reception_point: (
+        ReceptionPointDTO | None
+    ) = await reception_point_service.get_reception_point_by_id(reception_point_id)
+
+    if reception_point is None:
+        raise custom_exceptions.NotFoundException(
+            detail=f"Reception point with {reception_point_id} id not found."
+        )
+
+    result: ReceptionPointDTO = (
+        await reception_point_service.update_status_reception_point(
+            reception_point=reception_point,
+            comment=data.comment,
+            status=data.status,
+            user_id=reception_point.user_id,
+        )
+    )
+
+    return ReceptionPointResponseSchema(**await result.to_dict(exclude={"images_url"}))

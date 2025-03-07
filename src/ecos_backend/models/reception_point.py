@@ -14,12 +14,12 @@ class ReceptionPointDTO(model.AbstractModel):
     name: str
     address: str
     user_id: uuid.UUID
+    status: enums.PointStatus = field(default=enums.PointStatus.UNDER_MODERATION)
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     urls: list[str] = field(default_factory=list)
     work_schedules: list[ws.WorkScheduleDTO] = field(default_factory=list)
     waste_ids: list[uuid.UUID] = field(default_factory=list)
     description: str | None = None
-    status: enums.PointStatus | None = None
     images_url: str | None = None
     updated_at: datetime | None = None
 
@@ -35,3 +35,6 @@ class ReceptionPointDTO(model.AbstractModel):
 
     def set_work_schedules(self, work_schedules: list[ws.WorkScheduleDTO]) -> None:
         self.work_schedules = work_schedules
+
+    def set_status(self, status: enums.PointStatus) -> None:
+        self.status = status

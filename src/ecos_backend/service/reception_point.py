@@ -3,12 +3,14 @@ import uuid
 
 from urllib.parse import urlparse
 
+from ecos_backend.models.moderation import ModerationDTO
 from ecos_backend.models.reception_point import ReceptionPointDTO
 from ecos_backend.models.drop_off_point_waste import DropOffPointWasteDTO
 
 from ecos_backend.common.interfaces.unit_of_work import AbstractUnitOfWork
 from ecos_backend.common.config import s3_config
 from ecos_backend.common import exception as custom_exceptions
+from ecos_backend.common import enums
 from ecos_backend.db.s3_storage import Boto3DAO
 
 
@@ -140,3 +142,25 @@ class ReceptionPointService:
                 reception_point_id=drop_off_point_wast.reception_point_id,
             )
             await self._uow.commit()
+
+    async def update_status_reception_point(
+        self,
+        reception_point: ReceptionPointDTO,
+        comment: str,
+        status: enums.PointStatus,
+        user_id: uuid.UUID,
+    ) -> ReceptionPointDTO:
+        async with self._uow:
+            reception_point.set_status(status=status)
+            moderation = ModerationDTO(
+                comment=comment,
+                reception_point_id=reception_point.id,
+                user_id=user_id,
+            )
+
+            await self._uow.reception_point.add(reception_point)
+            await self._uow.moderation.add(moderation)
+
+            await self._uow.commit()
+
+            return reception_point

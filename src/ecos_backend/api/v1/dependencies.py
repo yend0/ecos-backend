@@ -15,6 +15,7 @@ from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.targets import ValueTarget
 
 
+from ecos_backend.api.v1.schemas.moderation import ModerationResponseSchema
 from ecos_backend.api.v1.schemas.waste import WasteResponseSchema
 from ecos_backend.db import s3_storage
 from ecos_backend.db import database
@@ -30,11 +31,14 @@ from ecos_backend.common.keycloak_adapters import (
     KeycloakClientAdapter,
 )
 
+from ecos_backend.models.moderation import ModerationDTO
 from ecos_backend.models.reception_point import ReceptionPointDTO
 from ecos_backend.models.waste import WasteDTO
 from ecos_backend.service.user import UserService
 from ecos_backend.service.reception_point import ReceptionPointService
 from ecos_backend.service.waste import WasteService
+from ecos_backend.service.moderation import ModerationService
+
 
 from ecos_backend.api.v1.schemas.reception_point import ReceptionPointResponseSchema
 
@@ -77,6 +81,12 @@ async def get_waste_service(
     s3: typing.Annotated[s3_storage.Boto3DAO, Depends(s3_client)],
 ) -> UserService:
     return WasteService(uow=uow, s3_storage=s3)
+
+
+async def get_moderation_service(
+    uow: typing.Annotated[AbstractUnitOfWork, Depends(get_uow)],
+) -> UserService:
+    return ModerationService(uow=uow)
 
 
 async def verify_token(
@@ -180,3 +190,21 @@ async def waste_by_id(
         )
 
     return WasteResponseSchema(**await waste.to_dict())
+
+
+async def moderation_by_id(
+    moderation_id: typing.Annotated[uuid.UUID, Path],
+    moderation_service: typing.Annotated[
+        ModerationService, Depends(get_moderation_service)
+    ],
+) -> ReceptionPointResponseSchema:
+    moderation: ModerationDTO | None = await moderation_service.get_moderation_by_id(
+        moderation_id
+    )
+
+    if moderation is None:
+        raise custom_exceptions.NotFoundException(
+            detail=f"Moderation with {moderation_id} id not found."
+        )
+
+    return ModerationResponseSchema(**await moderation.to_dict())

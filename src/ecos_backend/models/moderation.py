@@ -8,10 +8,10 @@ from ecos_backend.common.interfaces import model
 
 @dataclass
 class ModerationDTO(model.AbstractModel):
-    comment: str
+    reception_point_id: uuid.UUID
+    user_id: uuid.UUID
+    comment: str | None = None
     verification_date: datetime | None = None
-    reception_point_id: uuid.UUID | None = None
-    user_id: uuid.UUID | None = None
     id: uuid.UUID = field(default_factory=uuid.uuid4)
 
     def set_reception_point_id(self, reception_point_id: uuid.UUID) -> None:
