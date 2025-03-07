@@ -30,7 +30,11 @@ class UserModel(model.AbstractModel):
         now: datetime.datetime = datetime.datetime.now()
         if (
             self.verification_code_created_at
-            and (now - self.verification_code_created_at).seconds < 300
+            and (
+                now.replace(tzinfo=None)
+                - self.verification_code_created_at.replace(tzinfo=None)
+            ).seconds
+            < 300
         ):
             raise ValueError("Verification code was recently sent. Try again later.")
 

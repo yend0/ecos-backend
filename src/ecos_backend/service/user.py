@@ -79,7 +79,7 @@ class UserService:
         async with self._uow:
             try:
                 token: str = user.generate_verification_code()
-                url: str = f"{request.url.scheme}://{request.client.host}:{request.url.port}{constatnts.VERIFY_EMAIL_PATH}{token.hex()}"
+                url: str = f"{request.url.scheme}://{request.client.host}:{request.url.port}{constatnts.VERIFY_EMAIL_PATH}{token}"
 
                 await EmailService(url=url, email=[user.email]).sendVerificationCode()
 
