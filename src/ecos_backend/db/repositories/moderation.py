@@ -19,7 +19,7 @@ class ModerationAbstractReposity(AbstractRepository, abc.ABC):
     pass
 
 
-class ModerationReposity(AbstractSqlRepository, AbstractRepository):
+class ModerationReposity(AbstractSqlRepository, ModerationAbstractReposity):
     async def get_by_id(self, id: uuid.UUID) -> ModerationDTO | None:
         stmt = select(
             orm.moderation_table,

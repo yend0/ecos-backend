@@ -6,6 +6,7 @@ from ecos_backend.db.repositories.reception_point import ReceptionPointReposity
 from ecos_backend.db.repositories.waste import WasteReposity
 from ecos_backend.db.repositories.work_schedule import WorkScheduleReposity
 from ecos_backend.db.repositories.moderation import ModerationReposity
+from ecos_backend.db.repositories.accrual_history import AccrualHistoryReposity
 
 
 class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
@@ -18,6 +19,7 @@ class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
         self.waste = WasteReposity(self._session)
         self.work_schedule = WorkScheduleReposity(self._session)
         self.moderation = ModerationReposity(self._session)
+        self.accrual_history = AccrualHistoryReposity(self._session)
 
         return await super().__aenter__()
 

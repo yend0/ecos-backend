@@ -6,6 +6,7 @@ from ecos_backend.db.repositories import (
     waste,
     work_schedule,
     moderation,
+    accrual_history,
 )
 
 
@@ -15,6 +16,7 @@ class AbstractUnitOfWork(abc.ABC):
     waste: waste.WasteAbstractReposity
     work_schedule: work_schedule.WorkScheduleAbstractReposity
     moderation: moderation.ModerationAbstractReposity
+    accrual_history: accrual_history.AccrualHistoryAbstractReposity
 
     @abc.abstractmethod
     async def __aenter__(self) -> "AbstractUnitOfWork":

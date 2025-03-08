@@ -4,6 +4,7 @@ import uuid
 from urllib.parse import urlparse
 
 from ecos_backend.models.moderation import ModerationDTO
+from ecos_backend.models.accrual_history import AccrualHistoryDTO
 from ecos_backend.models.reception_point import ReceptionPointDTO
 from ecos_backend.models.drop_off_point_waste import DropOffPointWasteDTO
 
@@ -151,16 +152,47 @@ class ReceptionPointService:
         user_id: uuid.UUID,
     ) -> ReceptionPointDTO:
         async with self._uow:
-            reception_point.set_status(status=status)
-            moderation = ModerationDTO(
-                comment=comment,
-                reception_point_id=reception_point.id,
-                user_id=user_id,
-            )
+            if status == enums.PointStatus.REJECTED:
+                reception_point.set_status(status=status)
 
-            await self._uow.reception_point.add(reception_point)
-            await self._uow.moderation.add(moderation)
+                accural_history = AccrualHistoryDTO(
+                    points=0,
+                    user_id=user_id,
+                    reward=enums.RewardType.RECYCLE_POINT_ADD,
+                )
 
-            await self._uow.commit()
+                moderation = ModerationDTO(
+                    comment=comment,
+                    reception_point_id=reception_point.id,
+                    user_id=user_id,
+                )
 
-            return reception_point
+                await self._uow.reception_point.add(reception_point)
+                await self._uow.moderation.add(moderation)
+                await self._uow.accrual_history.add(accural_history)
+
+                await self._uow.commit()
+
+                return reception_point
+            else:
+                reception_point.set_status(status=status)
+
+                accural_history = AccrualHistoryDTO(
+                    points=10,
+                    user_id=user_id,
+                    reward=enums.RewardType.RECYCLE_POINT_ADD,
+                )
+
+                moderation = ModerationDTO(
+                    comment=comment,
+                    reception_point_id=reception_point.id,
+                    user_id=user_id,
+                )
+
+                await self._uow.reception_point.add(reception_point)
+                await self._uow.moderation.add(moderation)
+                await self._uow.accrual_history.add(accural_history)
+
+                await self._uow.commit()
+
+                return reception_point

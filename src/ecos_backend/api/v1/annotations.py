@@ -8,6 +8,8 @@ from ecos_backend.api.v1.schemas import user as user_schemas
 from ecos_backend.api.v1.schemas import reception_point as rp
 from ecos_backend.api.v1.schemas import waste
 from ecos_backend.api.v1.schemas import moderation
+from ecos_backend.api.v1.schemas import accrual_history as accr
+from ecos_backend.service.accrual_history import AccrualHistoryService
 from ecos_backend.service.moderation import ModerationService
 from ecos_backend.service.user import UserService
 from ecos_backend.service.reception_point import ReceptionPointService
@@ -26,9 +28,12 @@ reception_point_service = typing.Annotated[
     ReceptionPointService, Depends(dependencies.get_reception_point_service)
 ]
 waste_service = typing.Annotated[WasteService, Depends(dependencies.get_waste_service)]
-
 moderation_service = typing.Annotated[
     ModerationService, Depends(dependencies.get_moderation_service)
+]
+
+accrual_history_service = typing.Annotated[
+    AccrualHistoryService, Depends(dependencies.get_accrual_history_service)
 ]
 
 data_request = typing.Annotated[
@@ -47,4 +52,8 @@ waste_by_id = typing.Annotated[
 
 moderation_by_id = typing.Annotated[
     moderation.ModerationResponseSchema, Depends(dependencies.moderation_by_id)
+]
+
+accrual_history_by_id = typing.Annotated[
+    accr.AccrualHistoryResponseSchema, Depends(dependencies.accrual_history_by_id)
 ]

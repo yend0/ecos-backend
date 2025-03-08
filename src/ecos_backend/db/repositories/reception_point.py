@@ -33,7 +33,7 @@ class ReceptionPointAbstractReposity(AbstractRepository, abc.ABC):
         raise NotImplementedError()
 
 
-class ReceptionPointReposity(AbstractSqlRepository, AbstractRepository):
+class ReceptionPointReposity(AbstractSqlRepository, ReceptionPointAbstractReposity):
     async def get_by_id(self, id: uuid.UUID) -> ReceptionPointDTO | None:
         stmt = (
             select(

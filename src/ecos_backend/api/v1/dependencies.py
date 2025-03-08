@@ -15,6 +15,7 @@ from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.targets import ValueTarget
 
 
+from ecos_backend.api.v1.schemas.accrual_history import AccrualHistoryResponseSchema
 from ecos_backend.api.v1.schemas.moderation import ModerationResponseSchema
 from ecos_backend.api.v1.schemas.waste import WasteResponseSchema
 from ecos_backend.db import s3_storage
@@ -31,6 +32,7 @@ from ecos_backend.common.keycloak_adapters import (
     KeycloakClientAdapter,
 )
 
+from ecos_backend.models.accrual_history import AccrualHistoryDTO
 from ecos_backend.models.moderation import ModerationDTO
 from ecos_backend.models.reception_point import ReceptionPointDTO
 from ecos_backend.models.waste import WasteDTO
@@ -38,6 +40,7 @@ from ecos_backend.service.user import UserService
 from ecos_backend.service.reception_point import ReceptionPointService
 from ecos_backend.service.waste import WasteService
 from ecos_backend.service.moderation import ModerationService
+from ecos_backend.service.accrual_history import AccrualHistoryService
 
 
 from ecos_backend.api.v1.schemas.reception_point import ReceptionPointResponseSchema
@@ -87,6 +90,12 @@ async def get_moderation_service(
     uow: typing.Annotated[AbstractUnitOfWork, Depends(get_uow)],
 ) -> UserService:
     return ModerationService(uow=uow)
+
+
+async def get_accrual_history_service(
+    uow: typing.Annotated[AbstractUnitOfWork, Depends(get_uow)],
+) -> UserService:
+    return AccrualHistoryService(uow=uow)
 
 
 async def verify_token(
@@ -181,7 +190,7 @@ async def reception_point_by_id(
 async def waste_by_id(
     waste_id: typing.Annotated[uuid.UUID, Path],
     waste_service: typing.Annotated[WasteService, Depends(get_waste_service)],
-) -> ReceptionPointResponseSchema:
+) -> WasteResponseSchema:
     waste: WasteDTO | None = await waste_service.get_waste_by_id(waste_id)
 
     if waste is None:
@@ -197,7 +206,7 @@ async def moderation_by_id(
     moderation_service: typing.Annotated[
         ModerationService, Depends(get_moderation_service)
     ],
-) -> ReceptionPointResponseSchema:
+) -> ModerationResponseSchema:
     moderation: ModerationDTO | None = await moderation_service.get_moderation_by_id(
         moderation_id
     )
@@ -208,3 +217,21 @@ async def moderation_by_id(
         )
 
     return ModerationResponseSchema(**await moderation.to_dict())
+
+
+async def accrual_history_by_id(
+    acrrual_history_id: typing.Annotated[uuid.UUID, Path],
+    accrual_history_service: typing.Annotated[
+        AccrualHistoryService, Depends(get_accrual_history_service)
+    ],
+) -> AccrualHistoryResponseSchema:
+    accrual_history: (
+        AccrualHistoryDTO | None
+    ) = await accrual_history_service.get_accrual_history_by_id(acrrual_history_id)
+
+    if accrual_history is None:
+        raise custom_exceptions.NotFoundException(
+            detail=f"Accrual history with {acrrual_history_id} id not found."
+        )
+
+    return AccrualHistoryResponseSchema(**await accrual_history.to_dict())

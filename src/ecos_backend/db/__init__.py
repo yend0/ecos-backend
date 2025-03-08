@@ -6,6 +6,7 @@ __all__: list[str] = [
     "work_schedule_table",
     "reception_point_table",
     "drop_off_point_waste_table",
+    "moderation_table",
 ]
 
 from .metadata import mapper_registry
@@ -17,4 +18,5 @@ from .adapters.orm import (
     work_schedule_table,
     reception_point_table,
     drop_off_point_waste_table,
+    moderation_table,
 )

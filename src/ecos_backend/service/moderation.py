@@ -2,7 +2,6 @@ import uuid
 
 
 from ecos_backend.models.moderation import ModerationDTO
-from ecos_backend.models.reception_point import ReceptionPointDTO
 
 from ecos_backend.common.interfaces.unit_of_work import AbstractUnitOfWork
 
@@ -21,7 +20,7 @@ class ModerationService:
             )
             return moderations
 
-    async def get_moderation_by_id(self, id: uuid.UUID) -> ReceptionPointDTO | None:
+    async def get_moderation_by_id(self, id: uuid.UUID) -> ModerationDTO | None:
         async with self._uow:
             moderation: ModerationDTO | None = await self._uow.moderation.get_by_id(
                 id=id
