@@ -5,20 +5,17 @@ from fastapi import APIRouter, Path, status
 
 from starlette.requests import ClientDisconnect
 
-from ecos_backend.common import exception as custom_exceptions
-
 from streaming_form_data.validators import ValidationError
 
-
 from ecos_backend.common import validation
-from ecos_backend.common import constatnts as const
+from ecos_backend.common import exception as custom_exceptions
 
 from ecos_backend.api.v1 import annotations
 from ecos_backend.api.v1.schemas.waste import (
     WasteRequestCreateSchema,
     WasteResponseSchema,
 )
-from ecos_backend.models.waste import WasteDTO
+from ecos_backend.db.models.waste import Waste
 
 router = APIRouter()
 
@@ -40,18 +37,19 @@ async def create_waste(
 
         waste_schema_request = WasteRequestCreateSchema(**data)
 
-        waste: WasteDTO = await waste_service.add_waste(
-            waste=WasteDTO(**waste_schema_request.model_dump()),
+        waste: Waste = await waste_service.add_waste(
+            waste=Waste(**waste_schema_request.model_dump()),
             file=uploaded_files[0][1],
-            file_extention=uploaded_files[0][2],
+            file_extension=uploaded_files[0][2],
         )
 
-        return WasteResponseSchema(**await waste.to_dict())
+        return waste
     except ClientDisconnect:
         pass
     except validation.MaxBodySizeException as e:
+        MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 10 + 1024
         raise custom_exceptions.PayloadTooLargeException(
-            detail=f"Maximum request body size limit ({const.MAX_REQUEST_BODY_SIZE} bytes) exceeded ({e.body_len} bytes read)."
+            detail=f"Maximum request body size limit ({MAX_REQUEST_BODY_SIZE} bytes) exceeded ({e.body_len} bytes read)."
         )
     except ValidationError as e:
         raise custom_exceptions.ValidationException(detail=f"{str(e)}")
@@ -70,9 +68,8 @@ async def get_wastes(
     waste_service: annotations.waste_service,
     search_filter: annotations.search_filter = None,
 ) -> typing.Any:
-    waste_list: list[WasteDTO] = await waste_service.get_wastes(filters=search_filter)
-
-    return [WasteResponseSchema(**await rp.to_dict()) for rp in waste_list]
+    waste_list: list[Waste] = await waste_service.get_wastes(filters=search_filter)
+    return waste_list
 
 
 @router.get(

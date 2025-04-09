@@ -1,22 +1,24 @@
 __all__: list[str] = [
-    "mapper_registry",
-    "user_table",
-    "accrual_history_table",
-    "waste_table",
-    "work_schedule_table",
-    "reception_point_table",
-    "drop_off_point_waste_table",
-    "moderation_table",
+    "Base",
+    "AccrualHistory",
+    "Moderation",
+    "ReceptionImage",
+    "ReceptionPointWaste",
+    "ReceptionPoint",
+    "UserImage",
+    "User",
+    "Waste",
+    "WorkSchedule",
 ]
 
-from .metadata import mapper_registry
+from .models.base import Base
 
-from .adapters.orm import (
-    user_table,
-    accrual_history_table,
-    waste_table,
-    work_schedule_table,
-    reception_point_table,
-    drop_off_point_waste_table,
-    moderation_table,
-)
+from .models.accrual_history import AccrualHistory
+from .models.moderation import Moderation
+from .models.reception_image import ReceptionImage
+from .models.reception_point_waste import ReceptionPointWaste
+from .models.reception_point import ReceptionPoint
+from .models.user_image import UserImage
+from .models.user import User
+from .models.waste import Waste
+from .models.work_schedule import WorkSchedule

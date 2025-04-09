@@ -11,7 +11,7 @@ class EmailService:
         self._email: list[EmailStr] = email
         self._url: HttpUrl = url
 
-    async def sendMail(self, subject, template) -> None:
+    async def send_mail(self, subject, template) -> None:
         conf = ConnectionConfig(
             MAIL_USERNAME=config.smtp_config.EMAIL_USERNAME,
             MAIL_PASSWORD=config.smtp_config.EMAIL_PASSWORD,
@@ -35,5 +35,5 @@ class EmailService:
         fm = FastMail(conf)
         await fm.send_message(message)
 
-    async def sendVerificationCode(self) -> None:
-        await self.sendMail("Your verification code", "verification")
+    async def send_verification_code(self) -> None:
+        await self.send_mail("Your verification code", "verification")

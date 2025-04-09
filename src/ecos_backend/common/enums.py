@@ -16,7 +16,7 @@ class PointStatus(enum.Enum):
     REJECTED: str = "Отклонено"
 
 
-class Day(enum.Enum):
+class DayOfWeek(enum.Enum):
     MONDAY: int = 1
     TYESDAY: int = 2
     WEDNESDAY: int = 3

@@ -1,4 +1,0 @@
-MAX_FILE_SIZE = 1024 * 1024 * 10  # 10MB
-MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 10 + 1024
-
-VERIFY_EMAIL_PATH = "/api/v1/users/verify-email/"

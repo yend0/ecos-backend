@@ -1,8 +1,8 @@
+import uuid
 import json
 import typing
 
 from urllib.parse import unquote
-import uuid
 
 from fastapi import Depends, Path, Security, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -15,15 +15,13 @@ from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.targets import ValueTarget
 
 
-from ecos_backend.api.v1.schemas.accrual_history import AccrualHistoryResponseSchema
-from ecos_backend.api.v1.schemas.moderation import ModerationResponseSchema
+from ecos_backend.api.v1.schemas.reception_point import ReceptionPointResponseSchema
 from ecos_backend.api.v1.schemas.waste import WasteResponseSchema
 from ecos_backend.db import s3_storage
 from ecos_backend.db import database
 
 from ecos_backend.common import config
 from ecos_backend.common import validation
-from ecos_backend.common import constatnts as const
 from ecos_backend.common import exception as custom_exceptions
 from ecos_backend.common.exception import ForbiddenExcetion, UnauthorizedExcetion
 from ecos_backend.common.unit_of_work import SQLAlchemyUnitOfWork, AbstractUnitOfWork
@@ -32,18 +30,15 @@ from ecos_backend.common.keycloak_adapters import (
     KeycloakClientAdapter,
 )
 
-from ecos_backend.models.accrual_history import AccrualHistoryDTO
-from ecos_backend.models.moderation import ModerationDTO
-from ecos_backend.models.reception_point import ReceptionPointDTO
-from ecos_backend.models.waste import WasteDTO
+from ecos_backend.db.models.reception_point import ReceptionPoint
+from ecos_backend.db.models.waste import Waste
 from ecos_backend.service.user import UserService
 from ecos_backend.service.reception_point import ReceptionPointService
 from ecos_backend.service.waste import WasteService
 from ecos_backend.service.moderation import ModerationService
-from ecos_backend.service.accrual_history import AccrualHistoryService
 
-
-from ecos_backend.api.v1.schemas.reception_point import ReceptionPointResponseSchema
+MAX_FILE_SIZE = 1024 * 1024 * 10  # 10MB
+MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 10 + 1024
 
 bearer_scheme = HTTPBearer()
 
@@ -92,12 +87,6 @@ async def get_moderation_service(
     return ModerationService(uow=uow)
 
 
-async def get_accrual_history_service(
-    uow: typing.Annotated[AbstractUnitOfWork, Depends(get_uow)],
-) -> UserService:
-    return AccrualHistoryService(uow=uow)
-
-
 async def verify_token(
     credentials: typing.Annotated[
         HTTPAuthorizationCredentials, Security(bearer_scheme)
@@ -117,7 +106,7 @@ async def verify_token(
 async def parse_request(
     request: Request,
 ) -> tuple[dict | None, list[tuple[str, bytes, str]] | None]:
-    body_validator = validation.MaxBodySizeValidator(const.MAX_REQUEST_BODY_SIZE)
+    body_validator = validation.MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
     data = ValueTarget()
     parser = StreamingFormDataParser(headers=request.headers)
 
@@ -132,7 +121,7 @@ async def parse_request(
 
     for filename in filenames:
         file_target = validation.BytesTarget(
-            validator=validation.MaxSizeValidator(const.MAX_FILE_SIZE)
+            validator=validation.MaxSizeValidator(MAX_FILE_SIZE)
         )
         parser.register(filename, file_target)
         file_targets[filename] = file_target
@@ -174,7 +163,7 @@ async def reception_point_by_id(
     ],
 ) -> ReceptionPointResponseSchema:
     reception_point: (
-        ReceptionPointDTO | None
+        ReceptionPoint | None
     ) = await reception_point_service.get_reception_point_by_id(reception_point_id)
 
     if reception_point is None:
@@ -182,56 +171,18 @@ async def reception_point_by_id(
             detail=f"Reception point with {reception_point_id} id not found."
         )
 
-    return ReceptionPointResponseSchema(
-        **await reception_point.to_dict(exclude={"images_url"})
-    )
+    return reception_point
 
 
 async def waste_by_id(
     waste_id: typing.Annotated[uuid.UUID, Path],
     waste_service: typing.Annotated[WasteService, Depends(get_waste_service)],
 ) -> WasteResponseSchema:
-    waste: WasteDTO | None = await waste_service.get_waste_by_id(waste_id)
+    waste: Waste | None = await waste_service.get_waste_by_id(waste_id)
 
     if waste is None:
         raise custom_exceptions.NotFoundException(
             detail=f"Waste with {waste_id} id not found."
         )
 
-    return WasteResponseSchema(**await waste.to_dict())
-
-
-async def moderation_by_id(
-    moderation_id: typing.Annotated[uuid.UUID, Path],
-    moderation_service: typing.Annotated[
-        ModerationService, Depends(get_moderation_service)
-    ],
-) -> ModerationResponseSchema:
-    moderation: ModerationDTO | None = await moderation_service.get_moderation_by_id(
-        moderation_id
-    )
-
-    if moderation is None:
-        raise custom_exceptions.NotFoundException(
-            detail=f"Moderation with {moderation_id} id not found."
-        )
-
-    return ModerationResponseSchema(**await moderation.to_dict())
-
-
-async def accrual_history_by_id(
-    acrrual_history_id: typing.Annotated[uuid.UUID, Path],
-    accrual_history_service: typing.Annotated[
-        AccrualHistoryService, Depends(get_accrual_history_service)
-    ],
-) -> AccrualHistoryResponseSchema:
-    accrual_history: (
-        AccrualHistoryDTO | None
-    ) = await accrual_history_service.get_accrual_history_by_id(acrrual_history_id)
-
-    if accrual_history is None:
-        raise custom_exceptions.NotFoundException(
-            detail=f"Accrual history with {acrrual_history_id} id not found."
-        )
-
-    return AccrualHistoryResponseSchema(**await accrual_history.to_dict())
+    return waste

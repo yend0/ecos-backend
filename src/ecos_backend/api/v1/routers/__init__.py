@@ -3,12 +3,12 @@ from enum import Enum
 from fastapi.routing import APIRouter
 
 from ecos_backend.common import config
+
 from ecos_backend.api.v1.routers import homepage
 from ecos_backend.api.v1.routers import user
 from ecos_backend.api.v1.routers import reception_point
 from ecos_backend.api.v1.routers import waste
 from ecos_backend.api.v1.routers import moderation
-from ecos_backend.api.v1.routers import accrual_history
 
 
 class Tags(Enum):
@@ -16,7 +16,6 @@ class Tags(Enum):
     reception_point: str = "Reception point"
     waste: str = "Waste"
     moderation: str = "Moderation"
-    accrual_history: str = "Accrual history"
 
 
 root = APIRouter()
@@ -31,9 +30,6 @@ api_router_v1.include_router(
 api_router_v1.include_router(waste.router, prefix="/wastes", tags=[Tags.waste])
 api_router_v1.include_router(
     moderation.router, prefix="/moderations", tags=[Tags.moderation]
-)
-api_router_v1.include_router(
-    accrual_history.router, prefix="/accrual-histories", tags=[Tags.accrual_history]
 )
 
 root.include_router(api_router_v1)

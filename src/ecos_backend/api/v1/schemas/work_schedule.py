@@ -8,7 +8,7 @@ from ecos_backend.common import enums
 
 
 class WorkScheduleBaseSchema(BaseModel):
-    day_of_week: enums.Day
+    day_of_week: enums.DayOfWeek
     open_time: time | None = None
     close_time: time | None = None
 
@@ -21,6 +21,4 @@ class WorkScheduleRequestCreateSchema(WorkScheduleBaseSchema):
 
 class WorkScheduleResponseSchema(WorkScheduleBaseSchema):
     id: uuid.UUID
-    reception_point_id: uuid.UUID
-
     model_config: ConfigDict = ConfigDict(from_attributes=True)
