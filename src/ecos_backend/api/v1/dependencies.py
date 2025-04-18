@@ -1,23 +1,44 @@
+import uuid
+import json
 import typing
 
-from fastapi import Depends, Security
+from urllib.parse import unquote
 
+from fastapi import Depends, Path, Security, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from keycloak import KeycloakAdmin
 
-from ecos_backend.common.exception import ForbiddenExcetion, UnauthorizedExcetion
+from streaming_form_data import StreamingFormDataParser
+from streaming_form_data.targets import ValueTarget
+
+
+from ecos_backend.api.v1.schemas.reception_point import ReceptionPointResponseSchema
+from ecos_backend.api.v1.schemas.waste import WasteResponseSchema
 from ecos_backend.db import s3_storage
 from ecos_backend.db import database
-from ecos_backend.common import config
 
+from ecos_backend.common import config
+from ecos_backend.common import validation
+from ecos_backend.common import exception as custom_exceptions
+from ecos_backend.common.exception import ForbiddenExcetion, UnauthorizedExcetion
+from ecos_backend.common.unit_of_work import SQLAlchemyUnitOfWork, AbstractUnitOfWork
 from ecos_backend.common.keycloak_adapters import (
     KeycloakAdminAdapter,
     KeycloakClientAdapter,
 )
-from ecos_backend.common.unit_of_work import SQLAlchemyUnitOfWork, AbstractUnitOfWork
+
+from ecos_backend.db.models.reception_point import ReceptionPoint
+from ecos_backend.db.models.waste import Waste
 from ecos_backend.service.user import UserService
+from ecos_backend.service.reception_point import ReceptionPointService
+from ecos_backend.service.waste import WasteService
+from ecos_backend.service.moderation import ModerationService
+
+MAX_FILE_SIZE = 1024 * 1024 * 10  # 10MB
+MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 10 + 1024
 
 bearer_scheme = HTTPBearer()
 
@@ -46,6 +67,26 @@ async def get_user_service(
     return UserService(uow=uow, admin=admin, s3_storage=s3)
 
 
+async def get_reception_point_service(
+    uow: typing.Annotated[AbstractUnitOfWork, Depends(get_uow)],
+    s3: typing.Annotated[s3_storage.Boto3DAO, Depends(s3_client)],
+) -> UserService:
+    return ReceptionPointService(uow=uow, s3_storage=s3)
+
+
+async def get_waste_service(
+    uow: typing.Annotated[AbstractUnitOfWork, Depends(get_uow)],
+    s3: typing.Annotated[s3_storage.Boto3DAO, Depends(s3_client)],
+) -> UserService:
+    return WasteService(uow=uow, s3_storage=s3)
+
+
+async def get_moderation_service(
+    uow: typing.Annotated[AbstractUnitOfWork, Depends(get_uow)],
+) -> UserService:
+    return ModerationService(uow=uow)
+
+
 async def verify_token(
     credentials: typing.Annotated[
         HTTPAuthorizationCredentials, Security(bearer_scheme)
@@ -60,3 +101,88 @@ async def verify_token(
     except Exception as e:
         print(f"Error: {str(e)}")
         raise ForbiddenExcetion(detail="Invalid or expired token")
+
+
+async def parse_request(
+    request: Request,
+) -> tuple[dict | None, list[tuple[str, bytes, str]] | None]:
+    body_validator = validation.MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
+    data = ValueTarget()
+    parser = StreamingFormDataParser(headers=request.headers)
+
+    file_targets: dict = {}
+
+    filenames_header: str | None = request.headers.get("filenames")
+    filenames: list[str] = (
+        [unquote(f.strip()) for f in filenames_header.split(",")]
+        if filenames_header
+        else []
+    )
+
+    for filename in filenames:
+        file_target = validation.BytesTarget(
+            validator=validation.MaxSizeValidator(MAX_FILE_SIZE)
+        )
+        parser.register(filename, file_target)
+        file_targets[filename] = file_target
+
+    parser.register("data", data)
+
+    async for chunk in request.stream():
+        body_validator(chunk)
+        parser.data_received(chunk)
+
+    try:
+        raw_data: str | None = data.value.decode() if data.value else None
+        if raw_data and raw_data.startswith('"') and raw_data.endswith('"'):
+            raw_data = raw_data[1:-1].replace('\\"', '"')
+        data_dict: dict | None = json.loads(raw_data) if raw_data else None
+    except json.JSONDecodeError as e:
+        raise custom_exceptions.ValidationException(
+            detail=f"Invalid JSON format: {str(e)}"
+        )
+
+    uploaded_files: list = []
+    for filename, file_target in file_targets.items():
+        if file_target.content:
+            try:
+                file_extension: str = validation.FileTypeValidator.validate(
+                    file_target.content
+                ).lstrip(".")
+                uploaded_files.append((filename, file_target.content, file_extension))
+            except validation.InvalidFileTypeException as e:
+                raise custom_exceptions.ValidationException(detail=str(e))
+
+    return data_dict, uploaded_files
+
+
+async def reception_point_by_id(
+    reception_point_id: typing.Annotated[uuid.UUID, Path],
+    reception_point_service: typing.Annotated[
+        ReceptionPointService, Depends(get_reception_point_service)
+    ],
+) -> ReceptionPointResponseSchema:
+    reception_point: (
+        ReceptionPoint | None
+    ) = await reception_point_service.get_reception_point_by_id(reception_point_id)
+
+    if reception_point is None:
+        raise custom_exceptions.NotFoundException(
+            detail=f"Reception point with {reception_point_id} id not found."
+        )
+
+    return reception_point
+
+
+async def waste_by_id(
+    waste_id: typing.Annotated[uuid.UUID, Path],
+    waste_service: typing.Annotated[WasteService, Depends(get_waste_service)],
+) -> WasteResponseSchema:
+    waste: Waste | None = await waste_service.get_waste_by_id(waste_id)
+
+    if waste is None:
+        raise custom_exceptions.NotFoundException(
+            detail=f"Waste with {waste_id} id not found."
+        )
+
+    return waste
