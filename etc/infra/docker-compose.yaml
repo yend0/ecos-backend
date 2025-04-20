@@ -62,7 +62,9 @@ services:
       KEYCLOAK_ADMIN_NAME: ${KEYCLOAK_ADMIN_NAME}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM}
-      BUCKET_NAME: ${BUCKET_NAME}
+      USER_BUCKET: ${USER_BUCKET}
+      RECEPTION_POINT_BUCKET: ${RECEPTION_POINT_BUCKET}
+      WASTE_BUCKET: ${WASTE_BUCKET}
       ENDPOINT: ${ENDPOINT}
       ACCESS_KEY: ${ACCESS_KEY}
       SECRET_KEY: ${SECRET_KEY}
@@ -120,21 +122,18 @@ services:
       - --health-enabled=true
       - --http-relative-path=/auth
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /auth/health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n' >&3;if [ $? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /auth/health/ready HTTP/1.1\r\nhost: http://localhost\r\nConnection: close\r\n\r\n' >&3;if [ $$? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;"]
       interval: 30s
       timeout: 10s
       retries: 3
   alembic-migrations:
     container_name: alembic-migrations
-    image: alembic-migrations:latest
+    image: ghcr.io/yend0/ecos-backend-migrations:latest
     depends_on:
       postgresql-ecos:
         condition: service_healthy
     networks:
       - backend-ecos
-    volumes:
-      - ../migrations:/migrations
-      - ../../src/ecos_backend:/ecos_backend
     environment:
         DATABASE_PORT: ${DATABASE_PORT}
         POSTGRES_DB: ${POSTGRES_DB}
@@ -156,6 +155,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_ADDRESS: ${MINIO_ADDRESS}
       MINIO_CONSOLE_ADDRESS: ${MINIO_CONSOLE_ADDRESS}
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL}
     command: server /data --console-address :9001
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]

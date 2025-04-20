@@ -18,8 +18,9 @@ RUN apk add --no-cache postgresql-dev libmagic
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin/alembic /usr/local/bin/alembic
 
-COPY alembic.ini /alembic.ini
-COPY migrations /migrations
+COPY etc/alembic.ini /alembic.ini
+COPY etc/migrations /migrations
+COPY src/ecos_backend /ecos_backend
 
 WORKDIR /
 ENTRYPOINT ["dockerize", "-template", "/alembic.ini:/alembic.ini", "alembic"]

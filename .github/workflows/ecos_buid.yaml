@@ -5,17 +5,29 @@ on:
   pull_request:
     branches: [ "main" ]
     paths:
-      - .github/workflows/ecos_build.yml
-      - VERSION
+      - '.github/workflows/ecos_build.yml'
+      - 'VERSION'
+      - 'etc/infra/docker-compose.yml'
+      - 'Dockerfile'
+      - 'etc/Dockerfile.migrations'
+      - 'src/ecos_backend/**'  
+      - 'etc/migrations/**'        
+      - 'etc/alembic.ini'
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   REGISTRY_TOKEN: ${{ secrets.DOCKER_CONTAINER_REGISTRY_TOKEN }}
-  
+  SERVER_IP: ${{ secrets.SERVER_IP }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_USER: ${{ secrets.SSH_USERNAME }}
+
 jobs:
   build_docker_image:
     runs-on: ubuntu-latest
-    name: Build
+    name: Build Docker Image
+    outputs:
+      image_tag: ${{ steps.get_version.outputs.VERSION }}
     permissions:
         actions: write       # Necessary to cancel workflow executions
         checks: write        # Necessary to write reports
@@ -23,10 +35,10 @@ jobs:
         contents: read
         packages: write
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (full)
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
     
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -51,19 +63,76 @@ jobs:
     
       - name: Read version from VERSION file
         id: get_version
-        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_OUTPUT
     
-      - name: Build and push Docker image  
+      - name: Build and push main application image
         run: |
           docker buildx build \
             --file Dockerfile \
             --cache-from type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache \
             --cache-to type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache,mode=max \
             --pull \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.VERSION }} \
             --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
             --push \
             .
-    
+
+      - name: Build and push alembic migrations image
+        run: |
+          docker buildx build \
+              --file etc/Dockerfile.migrations \
+              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migrations:latest \
+              --push \
+              .
+
       - name: Cleanup Docker
         run: docker buildx rm my_builder
+
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy on Production
+    needs: build_docker_image
+    steps:
+      - name: Checkout repo to get docker-compose.yml
+        uses: actions/checkout@v4
+    # ==================== SSH Setup ====================
+      - name: Install SSH client
+        run: sudo apt update && sudo apt install -y openssh-client
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan ${{ env.SERVER_IP }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+    # === Archive docker-compose.yml and .env ===
+      - name: Prepare deployment archive
+        run: |
+            mkdir -p build
+            cp etc/infra/docker-compose.yaml build/
+            echo "${{ secrets.COMPOSE_ENV_FILE }}" > build/.env
+            tar -cvf deploy.tar -C build .
+    # === Copy docker-compose.yml and files via SCP ===
+      - name: Copy docker-compose and files via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.SERVER_IP }}
+          username: ${{ env.SSH_USER }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          source: "deploy.tar"
+          target: "/home/${{ env.SSH_USER }}/ecos-deploy/"
+
+    # ==================== Docker Operations ====================
+      - name: Run Docker containers
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_IP }}
+          username: ${{ env.SSH_USER }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/ecos-deploy
+            tar -xvf deploy.tar
+            docker-compose pull
+            docker-compose down --remove-orphans
+            docker-compose up -d
