@@ -128,18 +128,12 @@ services:
       retries: 3
   alembic-migrations:
     container_name: alembic-migrations
-    build:
-      context: ../
-      dockerfile: Dockerfile.migrations
-    image: alembic-migrations:latest
+    image: ghcr.io/yend0/ecos-backend-migrations:latest
     depends_on:
       postgresql-ecos:
         condition: service_healthy
     networks:
       - backend-ecos
-    volumes:
-      - ../migrations:/migrations
-      - ../../src/ecos_backend:/ecos_backend
     environment:
         DATABASE_PORT: ${DATABASE_PORT}
         POSTGRES_DB: ${POSTGRES_DB}
