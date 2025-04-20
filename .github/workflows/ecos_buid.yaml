@@ -7,15 +7,18 @@ on:
     paths:
       - .github/workflows/ecos_build.yml
       - VERSION
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   REGISTRY_TOKEN: ${{ secrets.DOCKER_CONTAINER_REGISTRY_TOKEN }}
-  
+
 jobs:
   build_docker_image:
     runs-on: ubuntu-latest
-    name: Build
+    name: Build Docker Image
+    outputs:
+      image_tag: ${{ steps.get_version.outputs.VERSION }}
     permissions:
         actions: write       # Necessary to cancel workflow executions
         checks: write        # Necessary to write reports
@@ -51,7 +54,7 @@ jobs:
     
       - name: Read version from VERSION file
         id: get_version
-        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_OUTPUT
     
       - name: Build and push Docker image  
         run: |
@@ -60,10 +63,10 @@ jobs:
             --cache-from type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache \
             --cache-to type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache,mode=max \
             --pull \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.VERSION }} \
             --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
             --push \
             .
-    
+
       - name: Cleanup Docker
         run: docker buildx rm my_builder
