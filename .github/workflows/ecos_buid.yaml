@@ -18,7 +18,6 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   REGISTRY_TOKEN: ${{ secrets.DOCKER_CONTAINER_REGISTRY_TOKEN }}
-
 jobs:
   build_docker_image:
     runs-on: ubuntu-latest
@@ -94,3 +93,56 @@ jobs:
 
       - name: Cleanup Docker
         run: docker buildx rm my_builder
+
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy on Production
+    needs: build_docker_image
+    env:
+      SSH_USER: ${{ secrets.SSH_USERNAME }}
+      SERVER_IP: ${{ secrets.SERVER_IP }}    
+    steps:
+      - name: Download deployment bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-bundle
+          path: deployment-bundle
+
+    # ==================== SSH Setup ====================
+      - name: Install SSH client
+        run: sudo apt-get update && sudo apt-get install -y openssh-client
+
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan -t rsa $SERVER_IP >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Configure SSH agent
+        run: |
+          eval "$(ssh-agent -s)"
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
+    # ==================== Deployment ====================
+      - name: Upload files to server
+        run: |
+          ssh $SSH_USER@$SERVER_IP "mkdir -p ~/ecos-deploy"
+          echo "${{ secrets.COMPOSE_ENV_FILE }}" > .env.tmp
+          scp .env.tmp $SSH_USER@SERVER_IP:~/ecos-deploy/.env
+          rm .env.tmp
+
+          scp deployment-bundle/etc/infra/docker-compose.yml $SSH_USER@$SERVER_IP:~/ecos-deploy/
+    # ==================== Docker Operations ====================
+      - name: Pull images and restart containers
+        run: |
+          ssh $SSH_USER@$SERVER_IP "
+            cd ~/ecos-deploy
+            echo '==> Pulling latest images...'
+            docker compose pull
+            echo '==> Stopping old containers...'
+            docker compose down --remove-orphans
+            echo '==> Starting new containers...'
+            docker compose up -d
+            echo '==> Cleaning up...'
+            docker system prune -f
+          "
