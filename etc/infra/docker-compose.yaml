@@ -155,6 +155,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_ADDRESS: ${MINIO_ADDRESS}
       MINIO_CONSOLE_ADDRESS: ${MINIO_CONSOLE_ADDRESS}
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL}
     command: server /data --console-address :9001
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
