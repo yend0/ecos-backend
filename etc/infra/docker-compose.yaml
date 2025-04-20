@@ -128,6 +128,9 @@ services:
       retries: 3
   alembic-migrations:
     container_name: alembic-migrations
+    build:
+      context: ../
+      dockerfile: Dockerfile.migrations
     image: alembic-migrations:latest
     depends_on:
       postgresql-ecos:
