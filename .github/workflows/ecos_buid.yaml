@@ -108,6 +108,7 @@ jobs:
       - name: Prepare deployment archive
         run: |
             mkdir -p build
+            ls -la
             cp etc/infra/docker-compose.yml build/
             echo "${{ secrets.COMPOSE_ENV_FILE }}" > build/.env
             tar -cvf deploy.tar -C build .
