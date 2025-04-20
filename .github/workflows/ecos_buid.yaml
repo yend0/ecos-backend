@@ -84,16 +84,6 @@ jobs:
               --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migrations:latest \
               --push \
               .
-      
-      - name: Upload deployment bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-bundle
-          path: |
-            etc/infra/docker-compose.yml
-            src/
-            etc/migrations/
-          retention-days: 1
 
       - name: Cleanup Docker
         run: docker buildx rm my_builder
@@ -103,11 +93,8 @@ jobs:
     name: Deploy on Production
     needs: build_docker_image
     steps:
-      - name: Download deployment bundle
-        uses: actions/download-artifact@v4
-        with:
-          name: deployment-bundle
-          path: deployment-bundle
+      - name: Checkout repo to get docker-compose.yml
+        uses: actions/checkout@v4
     # ==================== SSH Setup ====================
       - name: Install SSH client
         run: sudo apt update && sudo apt install -y openssh-client
@@ -125,7 +112,7 @@ jobs:
           username: ${{ env.SSH_USER }}
           port: ${{ secrets.SSH_PORT || '22' }}
           key: ${{ env.SSH_PRIVATE_KEY }}
-          source: "deployment-bundle/etc/infra/docker-compose.yml"
+          source: "etc/infra/docker-compose.yml"
           target: "/home/${{ env.SSH_USER }}/ecos-deploy/docker-compose.yml"
     # === Upload environment file (.env) ===
       - name: Upload environment file
