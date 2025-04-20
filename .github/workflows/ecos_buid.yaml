@@ -116,19 +116,19 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          ssh-keyscan SERVER_IP >> ~/.ssh/known_hosts
+          ssh-keyscan ${{ env.SERVER_IP }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
       - name: Configure SSH agent
         run: |
           eval "$(ssh-agent -s)"
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+          echo "${{ env.SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
     # ==================== Deployment ====================
       - name: Upload files to server
         run: |
-          ssh $SSH_USER@$SERVER_IP "mkdir -p ~/ecos-deploy"
+          ssh ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "mkdir -p ~/ecos-deploy"
           echo "${{ secrets.COMPOSE_ENV_FILE }}" > .env.tmp
-          scp .env.tmp $SSH_USER@$SERVER_IP:~/ecos-deploy/.env
+          scp .env.tmp ${{ env.SSH_USER }}@${{ env.SERVER_IP }}:~/ecos-deploy/.env
           ssh $SSH_USER@$SERVER_IP "
             set -a
             source ~/ecos-deploy/.env
@@ -136,11 +136,11 @@ jobs:
           "
           rm .env.tmp
 
-          scp deployment-bundle/etc/infra/docker-compose.yml $SSH_USER@$SERVER_IP:~/ecos-deploy/
+          scp deployment-bundle/etc/infra/docker-compose.yml ${{ env.SSH_USER }}@${{ env.SERVER_IP }}:~/ecos-deploy/
     # ==================== Docker Operations ====================
       - name: Pull images and restart containers
         run: |
-          ssh $SSH_USER@$SERVER_IP "
+          ssh ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "
             cd ~/ecos-deploy
             echo '==> Pulling latest images...'
             docker compose pull
