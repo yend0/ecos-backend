@@ -118,36 +118,39 @@ jobs:
           chmod 700 ~/.ssh
           ssh-keyscan ${{ env.SERVER_IP }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
-
-      - name: Configure SSH agent
-        run: |
-          eval "$(ssh-agent -s)"
-          echo "${{ env.SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
     # ==================== Deployment ====================
-      - name: Upload files to server
-        run: |
-          ssh ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "mkdir -p ~/ecos-deploy"
-          echo "${{ secrets.COMPOSE_ENV_FILE }}" > .env.tmp
-          scp .env.tmp ${{ env.SSH_USER }}@${{ env.SERVER_IP }}:~/ecos-deploy/.env
-          ssh $SSH_USER@$SERVER_IP "
-            set -a
-            source ~/ecos-deploy/.env
-            set +a
-          "
-          rm .env.tmp
-
-          scp deployment-bundle/etc/infra/docker-compose.yml ${{ env.SSH_USER }}@${{ env.SERVER_IP }}:~/ecos-deploy/
+      - name: Setup environment
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_IP }}
+          username: ${{ env.SSH_USER }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            # Создаем .env из Secrets
+            cat << 'EOF' > /home/${{ env.SSH_USER }}/ecos-deploy/.env
+            ${{ secrets.COMPOSE_ENV_FILE }}
+            EOF
+            
+            chmod 750 /home/${{ env.SSH_USER }}/ecos-deploy
+            chmod 640 /home/${{ env.SSH_USER }}/ecos-deploy/.env
     # ==================== Docker Operations ====================
-      - name: Pull images and restart containers
-        run: |
-          ssh ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "
-            cd ~/ecos-deploy
-            echo '==> Pulling latest images...'
+      - name: Run Docker containers
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_IP }}
+          username: ${{ env.SSH_USER }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/${{ env.SSH_USER }}/ecos-deploy
+            
+            if [ ! -f .env ]; then
+              echo "ERROR: .env file missing!"
+              exit 1
+            fi
+            
             docker compose pull
-            echo '==> Stopping old containers...'
+            
             docker compose down --remove-orphans
-            echo '==> Starting new containers...'
             docker compose up -d
-            echo '==> Cleaning up...'
-            docker system prune -f
-          "
