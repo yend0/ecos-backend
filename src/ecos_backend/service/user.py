@@ -49,8 +49,7 @@ class UserService:
 
                 # Send verification email
                 verification_url: str = (
-                    f"http://{config.uvicorn_config.HOST}:"
-                    f"{config.uvicorn_config.PORT}"
+                    f"http://{config.uvicorn_config.HOST}"
                     f"{self.VERIFY_EMAIL_PATH}{token}"
                 )
                 await EmailService(
@@ -115,8 +114,7 @@ class UserService:
             user.verification_code = verification_code
 
             verification_url: str = (
-                f"http://{config.uvicorn_config.HOST}:"
-                f"{config.uvicorn_config.PORT}"
+                f"http://{config.uvicorn_config.HOST}"
                 f"{self.VERIFY_EMAIL_PATH}{token}"
             )
 
