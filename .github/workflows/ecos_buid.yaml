@@ -5,12 +5,14 @@ on:
   pull_request:
     branches: [ "main" ]
     paths:
-      - .github/workflows/ecos_build.yml
-      - VERSION
-      - etc/infra/docker-compose.yml
-      - Dockerfile
-      - etc/Dockerfile.migrations
-      - src/**
+      - '.github/workflows/ecos_build.yml'
+      - 'VERSION'
+      - 'etc/infra/docker-compose.yml'
+      - 'Dockerfile'
+      - 'etc/Dockerfile.migrations'
+      - 'src/ecos_backend/**'  
+      - 'etc/migrations/**'        
+      - 'etc/alembic.ini'
 
 env:
   REGISTRY: ghcr.io
@@ -75,10 +77,10 @@ jobs:
       - name: Build and push alembic migrations image
         run: |
           docker buildx build \
-              --file Dockerfile.migrations \
+              --file etc/Dockerfile.migrations \
               --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migrations:latest \
               --push \
-              ../
+              .
       
       - name: Upload deployment bundle
         uses: actions/upload-artifact@v4
