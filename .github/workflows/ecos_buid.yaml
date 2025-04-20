@@ -18,9 +18,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   REGISTRY_TOKEN: ${{ secrets.DOCKER_CONTAINER_REGISTRY_TOKEN }}
-  SERVER_IP: ${{ secrets.SERVER_IP }}
-  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-  SSH_USER: ${{ secrets.SSH_USERNAME }}
+  SERVER_IP: ${{ vars.SERVER_IP }}
+  SSH_PRIVATE_KEY: ${{ vars.SSH_PRIVATE_KEY }}
+  SSH_USER: ${{ vars.SSH_USERNAME }}
 
 jobs:
   build_docker_image:
@@ -127,7 +127,7 @@ jobs:
       - name: Upload files to server
         run: |
           ssh ${{ env.SSH_USER }}@${{ env.SERVER_IP }} "mkdir -p ~/ecos-deploy"
-          echo "${{ secrets.COMPOSE_ENV_FILE }}" > .env.tmp
+          echo "${{ vars.COMPOSE_ENV_FILE }}" > .env.tmp
           scp .env.tmp ${{ env.SSH_USER }}@${{ env.SERVER_IP }}:~/ecos-deploy/.env
           ssh $SSH_USER@$SERVER_IP "
             set -a
