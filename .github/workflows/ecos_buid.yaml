@@ -18,6 +18,10 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   REGISTRY_TOKEN: ${{ secrets.DOCKER_CONTAINER_REGISTRY_TOKEN }}
+  SERVER_IP: ${{ secrets.SERVER_IP }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  SSH_USER: ${{ secrets.SSH_USERNAME }}
+
 jobs:
   build_docker_image:
     runs-on: ubuntu-latest
@@ -112,20 +116,20 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          ssh-keyscan ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          ssh-keyscan SERVER_IP >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
       - name: Configure SSH agent
         run: |
           eval "$(ssh-agent -s)"
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     # ==================== Deployment ====================
       - name: Upload files to server
         run: |
-          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_IP }} "mkdir -p ~/ecos-deploy"
+          ssh $SSH_USER@$SERVER_IP "mkdir -p ~/ecos-deploy"
           echo "${{ secrets.COMPOSE_ENV_FILE }}" > .env.tmp
-          scp .env.tmp ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_IP }}:~/ecos-deploy/.env
-          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_IP }} "
+          scp .env.tmp $SSH_USER@$SERVER_IP:~/ecos-deploy/.env
+          ssh $SSH_USER@$SERVER_IP "
             set -a
             source ~/ecos-deploy/.env
             set +a
@@ -136,7 +140,7 @@ jobs:
     # ==================== Docker Operations ====================
       - name: Pull images and restart containers
         run: |
-          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_IP }} "
+          ssh $SSH_USER@$SERVER_IP "
             cd ~/ecos-deploy
             echo '==> Pulling latest images...'
             docker compose pull
