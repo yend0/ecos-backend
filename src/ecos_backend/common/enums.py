@@ -18,7 +18,7 @@ class PointStatus(enum.Enum):
 
 class DayOfWeek(enum.Enum):
     MONDAY: int = 1
-    TYESDAY: int = 2
+    TUESDAY: int = 2
     WEDNESDAY: int = 3
     THURSDAY: int = 4
     FRIDAY: int = 5

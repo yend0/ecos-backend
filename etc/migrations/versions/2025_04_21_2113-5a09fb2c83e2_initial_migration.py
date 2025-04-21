@@ -1,8 +1,8 @@
 """initial migration
 
-Revision ID: 9c6639534599
+Revision ID: 5a09fb2c83e2
 Revises:
-Create Date: 2025-04-09 02:41:06.837147
+Create Date: 2025-04-21 21:13:30.348576
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "9c6639534599"
+revision: str = "5a09fb2c83e2"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -142,16 +142,16 @@ def upgrade() -> None:
             "id", sa.Uuid(), server_default=sa.text("gen_random_uuid()"), nullable=False
         ),
         sa.Column(
-            "day_of_week",
+            "dayofweek",
             sa.Enum(
                 "MONDAY",
-                "TYESDAY",
+                "TUESDAY",
                 "WEDNESDAY",
                 "THURSDAY",
                 "FRIDAY",
                 "SATURDAY",
                 "SUNDAY",
-                name="day",
+                name="dayofweek",
             ),
             nullable=False,
         ),

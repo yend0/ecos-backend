@@ -17,7 +17,9 @@ class WorkSchedule(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True, server_default=text("gen_random_uuid()")
     )
-    day_of_week: Mapped[enums.DayOfWeek] = mapped_column(Enum(enums.DayOfWeek))
+    day_of_week: Mapped[enums.DayOfWeek] = mapped_column(
+        Enum(enums.DayOfWeek), name="dayofweek"
+    )
     open_time: Mapped[time | None] = mapped_column(default=Time)
     close_time: Mapped[time | None] = mapped_column(default=Time)
 
