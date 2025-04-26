@@ -104,8 +104,6 @@ services:
       - "8080:8080"
     networks:
       - backend-ecos
-    volumes:
-      - ./keycloak:/opt/keycloak/data/import:ro
     environment:
       KC_DB: ${KC_DB}
       KC_DB_URL: jdbc:postgresql://postgresql-keycloak:${PG_KEYCLOAK_DB_PORT}/${PG_KEYCLOAK_DB}
