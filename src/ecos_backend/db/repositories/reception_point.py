@@ -3,13 +3,13 @@ import uuid
 
 from sqlalchemy.orm import selectinload
 
+from ecos_backend.db.models.reception_point import ReceptionPoint
+from ecos_backend.db.models.waste import Waste
+
 from ecos_backend.common.interfaces.repository import (
     AbstractRepository,
     AbstractSqlRepository,
 )
-
-from ecos_backend.db.models.reception_point import ReceptionPoint
-from ecos_backend.db.models.waste import Waste
 
 
 class ReceptionPointAbstractReposity(AbstractRepository[ReceptionPoint], abc.ABC):
@@ -35,7 +35,7 @@ class ReceptionPointReposity(
         reception_point: ReceptionPoint | None = await self._session.get(
             ReceptionPoint,
             reception_point_id,
-            options=[selectinload(ReceptionPoint.waste)],
+            options=[selectinload(ReceptionPoint.wastes)],
         )
 
         waste: Waste | None = await self._session.get(Waste, waste_id)
@@ -43,8 +43,8 @@ class ReceptionPointReposity(
         if not reception_point or not waste:
             raise ValueError("ReceptionPoint or Waste not found")
 
-        if waste not in reception_point.waste:
-            reception_point.waste.append(waste)
+        if waste not in reception_point.wastes:
+            reception_point.wastes.append(waste)
             await self._session.flush()
 
         return reception_point
@@ -55,7 +55,7 @@ class ReceptionPointReposity(
         reception_point: ReceptionPoint | None = await self._session.get(
             ReceptionPoint,
             reception_point_id,
-            options=[selectinload(ReceptionPoint.waste)],
+            options=[selectinload(ReceptionPoint.wastes)],
         )
 
         waste: Waste | None = await self._session.get(Waste, waste_id)
@@ -63,8 +63,8 @@ class ReceptionPointReposity(
         if not reception_point or not waste:
             raise ValueError("ReceptionPoint or Waste not found")
 
-        if waste in reception_point.waste:
-            reception_point.waste.remove(waste)
+        if waste in reception_point.wastes:
+            reception_point.wastes.remove(waste)
             await self._session.flush()
 
         return reception_point

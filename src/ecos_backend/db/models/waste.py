@@ -14,14 +14,18 @@ class Waste(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True, server_default=text("gen_random_uuid()")
     )
-    name: Mapped[str] = mapped_column(String(32))
     abbreviated_name: Mapped[str] = mapped_column(String(32), unique=True)
     image_url: Mapped[str | None] = mapped_column(String(255), unique=True)
-    description: Mapped[str]
 
     if TYPE_CHECKING:
         from .reception_point import ReceptionPoint
+        from .waste_translation import WasteTranslation
 
-    reception_point: Mapped[list["ReceptionPoint"]] = relationship(
-        back_populates="waste", secondary="Reception_Point_Waste"
+    reception_points: Mapped[list["ReceptionPoint"]] = relationship(
+        back_populates="wastes", secondary="Reception_Point_Waste"
+    )
+
+    waste_translations: Mapped[list["WasteTranslation"]] = relationship(
+        back_populates="waste",
+        cascade="all, delete-orphan",
     )

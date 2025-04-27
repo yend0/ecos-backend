@@ -45,7 +45,7 @@ async def create_reception_point(
         data_schema = ReceptionPointRequestCreateSchema(**data_dict)
         model = ReceptionPoint(
             user_id=uuid.UUID(sub),
-            **data_schema.model_dump(exclude={"work_schedule"}),
+            **data_schema.model_dump(exclude={"work_schedules"}),
         )
 
         if not uploaded_files:
@@ -55,7 +55,7 @@ async def create_reception_point(
 
         await reception_point_service.add_reception_point(
             reception_point=model,
-            work_schedule=data_schema.work_schedule,
+            work_schedule=data_schema.work_schedules,
             uploaded_files=uploaded_files,
         )
 

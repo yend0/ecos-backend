@@ -36,25 +36,25 @@ class User(Base):
         from .moderation import Moderation
         from .reception_point import ReceptionPoint
 
-    user_image: Mapped[list["UserImage"]] = relationship(
+    user_images: Mapped[list["UserImage"]] = relationship(
         back_populates="user",
         cascade="all, delete",
         passive_deletes=True,
     )
 
-    accural_history: Mapped[list["AccrualHistory"]] = relationship(
+    accural_histories: Mapped[list["AccrualHistory"]] = relationship(
         back_populates="user",
         cascade="all, delete",
         passive_deletes=True,
     )
 
-    moderation: Mapped[list["Moderation"]] = relationship(
+    moderations: Mapped[list["Moderation"]] = relationship(
         back_populates="user",
         cascade="all, delete",
         passive_deletes=True,
     )
 
-    reception_point: Mapped[list["ReceptionPoint"]] = relationship(
+    reception_points: Mapped[list["ReceptionPoint"]] = relationship(
         back_populates="user",
         cascade="all, delete",
         passive_deletes=True,

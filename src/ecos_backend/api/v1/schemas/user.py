@@ -33,14 +33,36 @@ PASSWORD_PATTERN: re.Pattern[str] = re.compile(
 
 
 class UserBaseSchema(BaseModel):
+    """
+    Base schema for user-related operations.
+
+    Attributes:
+        email (EmailStr): User email address.
+    """
+
     email: EmailStr = Field(..., description="User email address")
 
     model_config: ConfigDict = ConfigDict(extra="forbid")
 
 
 class UserRequestCreateSchema(UserBaseSchema):
+    """
+    Schema for user creation requests.
+
+    Attributes:
+        email (EmailStr): User email address.
+        password (str): User password.
+
+    Methods:
+        validate_password(cls, value): Validates the password format.
+        normalize_email(cls, v: str) -> str: Normalizes the email address.
+    """
+
     password: str = Field(
-        ..., min_length=PASSWORD_MIN_LENGTH, max_length=PASSWORD_MAX_LENGTH
+        ...,
+        min_length=PASSWORD_MIN_LENGTH,
+        max_length=PASSWORD_MAX_LENGTH,
+        description="User password",
     )
 
     @field_validator("password")
@@ -59,6 +81,30 @@ class UserRequestCreateSchema(UserBaseSchema):
 
 
 class UserResponseSchema(UserBaseSchema):
+    """
+    Schema for user response.
+
+    Attributes:
+        id (uuid.UUID): Unique user identifier.
+        email (EmailStr): User email address.
+        first_name (str | None): User's first name.
+        middle_name (str | None): User's middle name.
+        last_name (str | None): User's last name.
+        birth_date (date | None): User's birth date (YYYY-MM-DD).
+        image_url (HttpUrl | None): URL to user's profile image.
+        points (int): User's loyalty points.
+        email_verified (bool): Is email verified.
+        created_at (datetime): User registration timestamp.
+        updated_at (datetime): Last profile update timestamp.
+        user_image (list[UserImageBaseSchema]): User's profile images.
+        accural_history (list[AccrualHistoryBaseSchema]): User's accrual history.
+
+    Methods:
+        full_name(self) -> str | None: Returns the full name of the user.
+        set_image_url(cls, data: typing.Any) -> typing.Any: Sets the image URL based on the first image.
+        set_points(cls, data: typing.Any) -> typing.Any: Sets the points based on the accrual history.
+    """
+
     id: uuid.UUID = Field(..., description="Unique user identifier")
     first_name: str | None = Field(
         None, max_length=MAX_NAME_LENGTH, description="User's first name"
@@ -76,10 +122,10 @@ class UserResponseSchema(UserBaseSchema):
     created_at: datetime = Field(..., description="User registration timestamp")
     updated_at: datetime = Field(..., description="Last profile update timestamp")
 
-    user_image: list[UserImageBaseSchema] = Field(
+    user_images: list[UserImageBaseSchema] = Field(
         default_factory=list, description="User's profile images"
     )
-    accural_history: list[AccrualHistoryBaseSchema] = Field(
+    accural_histories: list[AccrualHistoryBaseSchema] = Field(
         default_factory=list, description="User's accrual history"
     )
 
@@ -95,8 +141,8 @@ class UserResponseSchema(UserBaseSchema):
 
     @model_validator(mode="before")
     def set_image_url(cls, data: typing.Any) -> typing.Any:
-        if isinstance(data, User) and hasattr(data, "user_image") and data.user_image:
-            first_image: UserImage = data.user_image[0]
+        if isinstance(data, User) and hasattr(data, "user_images") and data.user_images:
+            first_image: UserImage = data.user_images[0]
             data.image_url = f"{config.s3_config.ENDPOINT}/{config.s3_config.USER_BUCKET}/{data.id}/images/{first_image.filename}"
         return data
 
@@ -112,6 +158,19 @@ class UserResponseSchema(UserBaseSchema):
 
 
 class UserRequestUpdatePartialSchema(BaseModel):
+    """
+    Schema for partial user update requests.
+
+    Attributes:
+        first_name (str | None): User's first name.
+        middle_name (str | None): User's middle name.
+        last_name (str | None): User's last name.
+        birth_date (date | None): User's birth date (YYYY-MM-DD).
+    Methods:
+        validate_birth_date(cls, v: date | None) -> date | None: Validates the birth date.
+        check_at_least_one_field(self) -> "UserRequestUpdatePartialSchema": Ensures at least one field is provided for update.
+    """
+
     first_name: Annotated[str, StringConstraints(max_length=MAX_NAME_LENGTH)] | None = (
         Field(None, description="User's first name")
     )
