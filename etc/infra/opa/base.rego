@@ -78,6 +78,26 @@ allow = true if {
             "method": "DELETE",
             "path": ["api", "v1", "wastes", "*"],
             "roles": ["moderator"]
+        },
+        {
+            "method": "GET",
+            "path": ["api", "v1", "waste-translations"],
+            "roles": ["", "user", "moderator"]
+        },
+        {
+            "method": "POST",
+            "path": ["api", "v1", "waste-translations"],
+            "roles": ["moderator"]
+        },
+        {
+            "method": "DELETE",
+            "path": ["api", "v1", "waste-translations", "*"],
+            "roles": ["moderator"]
+        },
+        {
+            "method": "PATCH",
+            "path": ["api", "v1", "waste-translations", "*"],
+            "roles": ["moderator"]
         }
     }
     p := permissions[_]
