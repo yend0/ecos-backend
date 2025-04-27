@@ -115,6 +115,8 @@ class ReceptionPointService:
     async def get_reception_points(
         self,
         filters: dict | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
         page: int = 1,
         per_page: int = 10,
     ) -> list[ReceptionPoint]:
@@ -122,17 +124,35 @@ class ReceptionPointService:
         async with self.uow:
             try:
                 options: list = []
-                options.append(selectinload(ReceptionPoint.work_schedule))
-                options.append(selectinload(ReceptionPoint.reception_image))
-                options.append(selectinload(ReceptionPoint.waste))
+                options.append(selectinload(ReceptionPoint.work_schedules))
+                options.append(selectinload(ReceptionPoint.reception_images))
+                options.append(selectinload(ReceptionPoint.wastes))
 
-                points: list[ReceptionPoint] = await self.uow.reception_point.get_all(
-                    filters=filters,
-                    options=options,
-                    limit=per_page,
-                    offset=(page - 1) * per_page,
-                )
+                radius = filters.pop("radius", None)
 
+                if (
+                    radius is not None
+                    and latitude is not None
+                    and longitude is not None
+                ):
+                    points = await self.uow.reception_point.get_nearby_points(
+                        user_lat=latitude,
+                        user_lon=longitude,
+                        radius_meters=radius,
+                        filters=filters,
+                        page=page,
+                        per_page=per_page,
+                        options=options,
+                    )
+                else:
+                    points: list[
+                        ReceptionPoint
+                    ] = await self.uow.reception_point.get_all(
+                        filters=filters,
+                        options=options,
+                        limit=per_page,
+                        offset=(page - 1) * per_page,
+                    )
                 return points
             except Exception as e:
                 raise exc.InternalServerException(
@@ -144,9 +164,9 @@ class ReceptionPointService:
         async with self.uow:
             try:
                 options: list = []
-                options.append(selectinload(ReceptionPoint.work_schedule))
-                options.append(selectinload(ReceptionPoint.reception_image))
-                options.append(selectinload(ReceptionPoint.waste))
+                options.append(selectinload(ReceptionPoint.work_schedules))
+                options.append(selectinload(ReceptionPoint.reception_images))
+                options.append(selectinload(ReceptionPoint.wastes))
 
                 point: ReceptionPoint | None = await self.uow.reception_point.get_by_id(
                     id=id, options=options
@@ -167,9 +187,9 @@ class ReceptionPointService:
                     raise exc.NotFoundException(detail="Reception point not found")
 
                 # Delete associated images
-                if len(point.reception_image) > 0:
+                if len(point.reception_images) > 0:
                     await self._delete_images(
-                        point.id, [img.filename for img in point.reception_image]
+                        point.id, [img.filename for img in point.reception_images]
                     )
 
                 # Delete main record

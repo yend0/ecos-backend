@@ -4,7 +4,10 @@ import dataclasses
 
 from urllib.parse import urlparse
 
+from sqlalchemy.orm import selectinload
+
 from ecos_backend.db.models.waste import Waste
+from ecos_backend.db.models.waste_translation import WasteTranslation
 from ecos_backend.common.interfaces.unit_of_work import AbstractUnitOfWork
 from ecos_backend.common.config import s3_config
 from ecos_backend.common import exception as custom_exceptions
@@ -19,6 +22,7 @@ class WasteService:
     async def add_waste(
         self,
         waste: Waste,
+        waste_translations: list[WasteTranslation],
         file: bytes | None = None,
         file_extension: str | None = None,
     ) -> Waste:
@@ -38,6 +42,18 @@ class WasteService:
                     waste.image_url = clean_url
 
                 await self.uow.waste.add(waste)
+
+                for translation in waste_translations:
+                    waste_translation_data = translation.dict(exclude_unset=True)
+                    waste_translation = WasteTranslation(
+                        id=uuid.uuid4(),
+                        language_code=waste_translation_data.get("language_code"),
+                        name=waste_translation_data.get("name"),
+                        description=waste_translation_data.get("description"),
+                        waste_id=waste.id,
+                    )
+                    await self.uow.work_schedule.add(waste_translation)
+
                 await self.uow.commit()
                 return waste
             except Exception as e:
@@ -46,11 +62,23 @@ class WasteService:
                     detail=f"Failed to add waste: {str(e)}"
                 ) from e
 
-    async def get_wastes(self, filters: dict | None = None) -> list[Waste]:
+    async def get_wastes(
+        self, language_code: str, filters: dict | None = None
+    ) -> list[Waste]:
         """Get list of wastes with their image URLs."""
         async with self.uow:
             try:
-                wastes: list[Waste] = await self.uow.waste.get_all(filters=filters)
+                options = [selectinload(Waste.waste_translations)]
+
+                wastes: list[Waste] = await self.uow.waste.get_all(options=options)
+
+                if language_code:
+                    for waste in wastes:
+                        waste.waste_translations = [
+                            translation
+                            for translation in waste.waste_translations
+                            if translation.language_code.value == language_code
+                        ]
                 return wastes
             except Exception as e:
                 raise custom_exceptions.InternalServerException(

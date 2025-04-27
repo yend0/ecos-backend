@@ -8,6 +8,7 @@ __all__: list[str] = [
     "UserImage",
     "User",
     "Waste",
+    "WasteTranslation",
     "WorkSchedule",
 ]
 
@@ -21,4 +22,5 @@ from .models.reception_point import ReceptionPoint
 from .models.user_image import UserImage
 from .models.user import User
 from .models.waste import Waste
+from .models.waste_translation import WasteTranslation
 from .models.work_schedule import WorkSchedule

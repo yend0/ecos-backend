@@ -24,3 +24,8 @@ class DayOfWeek(enum.Enum):
     FRIDAY: int = 5
     SATURDAY: int = 6
     SUNDAY: int = 7
+
+
+class LanguageCode(enum.Enum):
+    RU = "ru"
+    EN = "en"

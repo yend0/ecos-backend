@@ -1,8 +1,8 @@
-"""initial migration
+"""initial migrations
 
-Revision ID: 5a09fb2c83e2
+Revision ID: ca077c438eb0
 Revises:
-Create Date: 2025-04-21 21:13:30.348576
+Create Date: 2025-04-27 14:29:54.106429
 
 """
 
@@ -10,10 +10,10 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-
+from geoalchemy2 import Geography
 
 # revision identifiers, used by Alembic.
-revision: str = "5a09fb2c83e2"
+revision: str = "ca077c438eb0"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -48,10 +48,8 @@ def upgrade() -> None:
         sa.Column(
             "id", sa.Uuid(), server_default=sa.text("gen_random_uuid()"), nullable=False
         ),
-        sa.Column("name", sa.String(length=32), nullable=False),
         sa.Column("abbreviated_name", sa.String(length=32), nullable=False),
         sa.Column("image_url", sa.String(length=255), nullable=True),
-        sa.Column("description", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("abbreviated_name"),
         sa.UniqueConstraint("image_url"),
@@ -78,6 +76,17 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("description", sa.String(), nullable=True),
         sa.Column("address", sa.String(length=255), nullable=False),
+        sa.Column(
+            "location",
+            Geography(
+                geometry_type="POINT",
+                srid=4326,
+                from_text="ST_GeogFromText",
+                name="geography",
+                nullable=False,
+            ),
+            nullable=False,
+        ),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column(
             "status",
@@ -98,6 +107,21 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Uuid(), nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["User.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "Waste_Translation",
+        sa.Column(
+            "id", sa.Uuid(), server_default=sa.text("gen_random_uuid()"), nullable=False
+        ),
+        sa.Column("waste_id", sa.Uuid(), nullable=False),
+        sa.Column(
+            "languagecode", sa.Enum("RU", "EN", name="languagecode"), nullable=False
+        ),
+        sa.Column("name", sa.String(length=64), nullable=False),
+        sa.Column("description", sa.String(), nullable=False),
+        sa.ForeignKeyConstraint(["waste_id"], ["Waste.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("waste_id", "languagecode", name="uq_waste_lang"),
     )
     op.create_table(
         "Moderation",
@@ -172,6 +196,7 @@ def downgrade() -> None:
     op.drop_table("Reception_Point_Waste")
     op.drop_table("Reception_Image")
     op.drop_table("Moderation")
+    op.drop_table("Waste_Translation")
     op.drop_table("User_Image")
     op.drop_table("Reception_Point")
     op.drop_table("Accrual_History")

@@ -3,6 +3,7 @@ import abc
 from ecos_backend.db.repositories import (
     user,
     waste,
+    waste_translation,
     work_schedule,
     moderation,
     accrual_history,
@@ -15,6 +16,7 @@ from ecos_backend.db.repositories import (
 class AbstractUnitOfWork(abc.ABC):
     user: user.UserAbstractReposity
     waste: waste.WasteAbstractReposity
+    waste_translation: waste_translation.WasteTranslationAbstractReposity
     work_schedule: work_schedule.WorkScheduleAbstractReposity
     user_image: user_image.UserImageAbstractReposity
     reception_point: reception_point.ReceptionPointAbstractReposity

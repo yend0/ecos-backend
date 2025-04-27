@@ -15,6 +15,7 @@ from ecos_backend.db.repositories.reception_image import ReceptionImageReposity
 from ecos_backend.db.models.user import User
 from ecos_backend.db.models.reception_point import ReceptionPoint
 from ecos_backend.db.models.waste import Waste
+from ecos_backend.db.models.waste_translation import WasteTranslation
 from ecos_backend.db.models.work_schedule import WorkSchedule
 from ecos_backend.db.models.moderation import Moderation
 from ecos_backend.db.models.accrual_history import AccrualHistory
@@ -32,6 +33,7 @@ class SQLAlchemyUnitOfWork(AbstractUnitOfWork):
         self.reception_point = ReceptionPointReposity(self._session, ReceptionPoint)
         self.reception_image = ReceptionImageReposity(self._session, ReceptionImage)
         self.waste = WasteReposity(self._session, Waste)
+        self.waste_translation = WasteReposity(self._session, WasteTranslation)
         self.work_schedule = WorkScheduleReposity(self._session, WorkSchedule)
         self.moderation = ModerationReposity(self._session, Moderation)
         self.accrual_history = AccrualHistoryReposity(self._session, AccrualHistory)
