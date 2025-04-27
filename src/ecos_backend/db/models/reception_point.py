@@ -4,8 +4,10 @@ from typing import TYPE_CHECKING
 
 from datetime import datetime
 
-from sqlalchemy import Enum, Float, ForeignKey, String, DateTime, func, text
+from sqlalchemy import Enum, ForeignKey, String, DateTime, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from geoalchemy2 import Geography
 
 from ecos_backend.common import enums
 from ecos_backend.db.models.base import Base
@@ -20,10 +22,8 @@ class ReceptionPoint(Base):
     name: Mapped[str] = mapped_column(String(255))
     description: Mapped[str | None]
     address: Mapped[str] = mapped_column(String(255), unique=True)
-
-    latitude: Mapped[float] = mapped_column(Float, nullable=False, server_default="0.0")
-    longitude: Mapped[float] = mapped_column(
-        Float, nullable=False, server_default="0.0"
+    location: Mapped[Geography] = mapped_column(
+        Geography(geometry_type="POINT", srid=4326)
     )
 
     updated_at: Mapped[datetime] = mapped_column(

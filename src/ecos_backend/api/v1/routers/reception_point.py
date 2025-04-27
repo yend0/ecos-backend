@@ -1,7 +1,7 @@
 import typing
 import uuid
 
-from fastapi import APIRouter, Depends, Path, status
+from fastapi import APIRouter, Depends, Form, Path, status
 
 from starlette.requests import ClientDisconnect
 
@@ -43,9 +43,16 @@ async def create_reception_point(
         data_dict, uploaded_files = data
 
         data_schema = ReceptionPointRequestCreateSchema(**data_dict)
+
+        from geoalchemy2 import WKTElement
+
         model = ReceptionPoint(
             user_id=uuid.UUID(sub),
-            **data_schema.model_dump(exclude={"work_schedules"}),
+            **data_schema.model_dump(exclude={"work_schedules", "location"}),
+            location=WKTElement(
+                f"POINT({data_schema.location.longitude} {data_schema.location.latitude})",
+                srid=4326,
+            ),
         )
 
         if not uploaded_files:
@@ -87,15 +94,18 @@ async def get_reception_points(
     filter: typing.Annotated[ReceptionPointFilterParams, Depends()],
     pagination: typing.Annotated[PaginationParams, Depends()],
     reception_point_service: annotations.reception_point_service,
+    latitude: typing.Annotated[float | None, Form()] = None,
+    longitude: typing.Annotated[float | None, Form()] = None,
 ) -> typing.Any:
     reception_points: list[
         ReceptionPoint
     ] = await reception_point_service.get_reception_points(
+        latitude=latitude,
+        longitude=longitude,
         filters=filter.model_dump(exclude_none=True),
         page=pagination.page,
         per_page=pagination.per_page,
     )
-
     return ReceptionPointListResponse(
         items=reception_points,
         total=len(reception_points),

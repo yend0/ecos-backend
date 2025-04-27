@@ -150,10 +150,10 @@ class UserResponseSchema(UserBaseSchema):
     def set_points(cls, data: typing.Any) -> typing.Any:
         if (
             isinstance(data, User)
-            and hasattr(data, "accural_history")
-            and data.accural_history
+            and hasattr(data, "accural_histories")
+            and data.accural_histories
         ):
-            data.points = sum(item.points for item in data.accural_history)
+            data.points = sum(item.points for item in data.accural_histories)
         return data
 
 

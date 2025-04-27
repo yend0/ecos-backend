@@ -13,6 +13,11 @@ from ecos_backend.api.v1.schemas.waste import WasteResponseBaseSchema
 from ecos_backend.common import config, enums
 
 
+class Location(BaseModel):
+    latitude: float = Field(..., description="Latitude")
+    longitude: float = Field(..., description="Longitude")
+
+
 class ReceptionPointFilterParams(BaseModel):
     """Parameters for filtering reception points
 
@@ -22,8 +27,6 @@ class ReceptionPointFilterParams(BaseModel):
         radius (float | None): Filter by radius (between 0 and 100 km).
         status (enums.PointStatus | None): Filter by status.
         waste_type (uuid.UUID | None): Filter by accepted waste type ID.
-        user_latitude (float | None): User latitude for radius filter.
-        user_longitude (float | None): User longitude for radius filter.
     """
 
     name: str | None = Field(
@@ -35,18 +38,12 @@ class ReceptionPointFilterParams(BaseModel):
     radius: float | None = Field(
         None,
         ge=0.0,
-        le=100.0,
-        description="Filter by radius (between 0 and 100 km)",
+        le=10000.0,
+        description="Filter by radius (between 0 and 10000 m)",
     )
     status: enums.PointStatus | None = Field(None, description="Filter by status")
     waste_type: uuid.UUID | None = Field(
         None, description="Filter by accepted waste type ID"
-    )
-    user_latitude: float | None = Field(
-        None, ge=-90.0, le=90.0, description="User latitude for radius filter"
-    )
-    user_longitude: float | None = Field(
-        None, ge=-180.0, le=180.0, description="User longitude for radius filter"
     )
 
     model_config = ConfigDict(extra="forbid")
@@ -73,10 +70,9 @@ class ReceptionPointBaseSchema(BaseModel):
         name (str): Reception point name.
         address (str): Reception point address.
         description (str | None): Reception point description.
-        latitude (float): Reception point latitude.
-        longitude (float): Reception point longitude.
         user_id (uuid.UUID): Owner user ID.
         status (enums.PointStatus): Reception point status.
+        location (Location): Reception point location.
     """
 
     name: str = Field(
@@ -91,12 +87,7 @@ class ReceptionPointBaseSchema(BaseModel):
     description: str | None = Field(
         None, max_length=10000, description="Reception point description"
     )
-    latitude: float = Field(
-        ..., ge=-90.0, le=90.0, description="Reception point latitude"
-    )
-    longitude: float = Field(
-        ..., ge=-180.0, le=180.0, description="Reception point longitude"
-    )
+    location: Location = Field(..., description="Reception point location")
     user_id: uuid.UUID = Field(..., description="Owner user ID")
     status: enums.PointStatus = Field(
         enums.PointStatus.UNDER_MODERATION,
@@ -114,8 +105,7 @@ class ReceptionPointRequestCreateSchema(BaseModel):
         name (str): Reception point name.
         address (str): Reception point address.
         description (str | None): Reception point description.
-        latitude (float): Reception point latitude.
-        longitude (float): Reception point longitude.
+        location (Location): Reception point location.
         work_schedules (list[WorkScheduleRequestCreateSchema]): Reception point work schedule.
     """
 
@@ -128,12 +118,7 @@ class ReceptionPointRequestCreateSchema(BaseModel):
     description: str | None = Field(
         None, max_length=10000, description="Reception point description"
     )
-    latitude: float = Field(
-        ..., ge=-90.0, le=90.0, description="Reception point latitude"
-    )
-    longitude: float = Field(
-        ..., ge=-180.0, le=180.0, description="Reception point longitude"
-    )
+    location: Location = Field(..., description="Reception point location")
     work_schedules: list[WorkScheduleRequestCreateSchema] = Field(
         default_factory=list, description="Reception point work schedule"
     )
@@ -147,8 +132,7 @@ class ReceptionPointResponseSchema(ReceptionPointBaseSchema):
         name (str): Reception point name.
         address (str): Reception point address.
         description (str | None): Reception point description.
-        latitude (float): Reception point latitude.
-        longitude (float): Reception point longitude.
+        location (Location): Reception point location.
         user_id (uuid.UUID): Owner user ID.
         status (enums.PointStatus): Reception point status.
         work_schedule (list[WorkScheduleResponseSchema]): Reception point work schedule.
@@ -206,6 +190,31 @@ class ReceptionPointResponseSchema(ReceptionPointBaseSchema):
             if not hasattr(data, "images"):
                 data.images = data.reception_images
 
+        return data
+
+    @model_validator(mode="before")
+    def convert_location(cls, data: typing.Any) -> typing.Any:
+        from geoalchemy2.elements import WKBElement
+        from shapely.geometry import Point as ShapelyPoint
+        from shapely import wkb
+
+        """Convert location from database object to Location schema."""
+        if isinstance(data, dict):
+            loc = data.get("location")
+            if isinstance(loc, WKBElement):
+                shapely_point: ShapelyPoint = wkb.loads(bytes(loc.data))
+                data["location"] = Location(
+                    latitude=shapely_point.y,
+                    longitude=shapely_point.x,
+                )
+        elif hasattr(data, "location"):
+            loc = getattr(data, "location", None)
+            if isinstance(loc, WKBElement):
+                shapely_point: ShapelyPoint = wkb.loads(bytes(loc.data))
+                data.location = Location(
+                    latitude=shapely_point.y,
+                    longitude=shapely_point.x,
+                )
         return data
 
 

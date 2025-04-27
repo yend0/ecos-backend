@@ -1,4 +1,3 @@
-import math
 import uuid
 import dataclasses
 
@@ -116,6 +115,8 @@ class ReceptionPointService:
     async def get_reception_points(
         self,
         filters: dict | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
         page: int = 1,
         per_page: int = 10,
     ) -> list[ReceptionPoint]:
@@ -128,26 +129,30 @@ class ReceptionPointService:
                 options.append(selectinload(ReceptionPoint.wastes))
 
                 radius = filters.pop("radius", None)
-                user_lat = filters.pop("user_latitude", None)
-                user_lon = filters.pop("user_longitude", None)
 
-                points: list[ReceptionPoint] = await self.uow.reception_point.get_all(
-                    filters=filters,
-                    options=options,
-                    limit=per_page,
-                    offset=(page - 1) * per_page,
-                )
-
-                if radius is not None and user_lat is not None and user_lon is not None:
-                    points = [
-                        point
-                        for point in points
-                        if self._haversine(
-                            user_lat, user_lon, point.latitude, point.longitude
-                        )
-                        <= radius
-                    ]
-
+                if (
+                    radius is not None
+                    and latitude is not None
+                    and longitude is not None
+                ):
+                    points = await self.uow.reception_point.get_nearby_points(
+                        user_lat=latitude,
+                        user_lon=longitude,
+                        radius_meters=radius,
+                        filters=filters,
+                        page=page,
+                        per_page=per_page,
+                        options=options,
+                    )
+                else:
+                    points: list[
+                        ReceptionPoint
+                    ] = await self.uow.reception_point.get_all(
+                        filters=filters,
+                        options=options,
+                        limit=per_page,
+                        offset=(page - 1) * per_page,
+                    )
                 return points
             except Exception as e:
                 raise exc.InternalServerException(
@@ -287,20 +292,3 @@ class ReceptionPointService:
             raise exc.InternalServerException(
                 detail=f"Failed to delete images: {str(e)}"
             )
-
-    def _haversine(self, lat1, lon1, lat2, lon2) -> float:
-        R = 6371.0
-
-        phi1: float = math.radians(lat1)
-        phi2: float = math.radians(lat2)
-        delta_phi: float = math.radians(lat2 - lat1)
-        delta_lambda: float = math.radians(lon2 - lon1)
-
-        a: float = (
-            math.sin(delta_phi / 2.0) ** 2
-            + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2.0) ** 2
-        )
-
-        c: float = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-        return R * c
