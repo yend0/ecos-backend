@@ -100,13 +100,13 @@ async def update_user(
             return updated_user
         elif uploaded_files:
             user: User = await fetch_user(sub, user_service)
-            updated_user: User = await user_service.update_account_information(
+            await user_service.update_account_information(
                 user=user,
                 file=uploaded_files[0][1],
                 file_extension=uploaded_files[0][2],
             )
 
-            return update_user
+            return await fetch_user(sub, user_service)
 
         else:
             user: User = await fetch_user(sub, user_service)

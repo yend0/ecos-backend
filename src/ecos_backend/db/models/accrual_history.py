@@ -29,4 +29,4 @@ class AccrualHistory(Base):
 
     if TYPE_CHECKING:
         from .user import User
-    user: Mapped["User"] = relationship(back_populates="accural_history")
+    user: Mapped["User"] = relationship(back_populates="accural_histories")

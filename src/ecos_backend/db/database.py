@@ -12,6 +12,7 @@ class Database:
         self._engine: AsyncEngine = create_async_engine(
             url=url,
             echo=echo,
+            plugins=["geoalchemy2"],
         )
 
         self._session_factory: async_sessionmaker = async_sessionmaker(

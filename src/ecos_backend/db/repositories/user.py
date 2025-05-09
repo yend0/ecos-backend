@@ -3,13 +3,14 @@ import abc
 from sqlalchemy import Result, Select, func, select
 from sqlalchemy.orm import joinedload
 
+
+from ecos_backend.db.models.user import User
+
 from ecos_backend.common.interfaces.repository import (
     T,
     AbstractRepository,
     AbstractSqlRepository,
 )
-
-from ecos_backend.db.models.user import User
 
 
 class UserAbstractReposity(AbstractRepository[User], abc.ABC):

@@ -1,6 +1,6 @@
 import uuid
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ReceptionImageBaseSchema(BaseModel):
@@ -13,8 +13,8 @@ class ReceptionImageBaseSchema(BaseModel):
         url: Full accessible URL of the image
     """
 
-    id: uuid.UUID
-    filename: str
+    id: uuid.UUID = Field(..., description="Unique identifier for the image")
+    filename: str = Field(..., description="Original filename of the image")
 
     model_config = ConfigDict(
         from_attributes=True,

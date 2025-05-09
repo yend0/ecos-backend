@@ -33,7 +33,7 @@ class Moderation(Base):
         from .user import User
         from .reception_point import ReceptionPoint
 
-    user: Mapped["User"] = relationship(back_populates="moderation")
+    user: Mapped["User"] = relationship(back_populates="moderations")
     reception_point: Mapped["ReceptionPoint"] = relationship(
-        back_populates="moderation"
+        back_populates="moderations"
     )

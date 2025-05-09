@@ -7,6 +7,8 @@ from datetime import datetime
 from sqlalchemy import Enum, ForeignKey, String, DateTime, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from geoalchemy2 import Geography
+
 from ecos_backend.common import enums
 from ecos_backend.db.models.base import Base
 
@@ -20,6 +22,10 @@ class ReceptionPoint(Base):
     name: Mapped[str] = mapped_column(String(255))
     description: Mapped[str | None]
     address: Mapped[str] = mapped_column(String(255), unique=True)
+    location: Mapped[Geography] = mapped_column(
+        Geography(geometry_type="POINT", srid=4326)
+    )
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=func.now(), onupdate=func.now()
     )
@@ -38,26 +44,26 @@ class ReceptionPoint(Base):
         from .work_schedule import WorkSchedule
         from .waste import Waste
 
-    user: Mapped["User"] = relationship(back_populates="reception_point")
+    user: Mapped["User"] = relationship(back_populates="reception_points")
 
-    moderation: Mapped[list["Moderation"]] = relationship(
+    moderations: Mapped[list["Moderation"]] = relationship(
         back_populates="reception_point",
         cascade="all, delete",
         passive_deletes=True,
     )
 
-    reception_image: Mapped[list["ReceptionImage"]] = relationship(
+    reception_images: Mapped[list["ReceptionImage"]] = relationship(
         back_populates="reception_point",
         cascade="all, delete",
         passive_deletes=True,
     )
 
-    work_schedule: Mapped[list["WorkSchedule"]] = relationship(
+    work_schedules: Mapped[list["WorkSchedule"]] = relationship(
         back_populates="reception_point",
         cascade="all, delete",
         passive_deletes=True,
     )
 
-    waste: Mapped[list["Waste"]] = relationship(
-        back_populates="reception_point", secondary="Reception_Point_Waste"
+    wastes: Mapped[list["Waste"]] = relationship(
+        back_populates="reception_points", secondary="Reception_Point_Waste"
     )

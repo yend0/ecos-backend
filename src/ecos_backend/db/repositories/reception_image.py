@@ -1,11 +1,12 @@
 import abc
 
+
+from ecos_backend.db.models.reception_image import ReceptionImage
+
 from ecos_backend.common.interfaces.repository import (
     AbstractRepository,
     AbstractSqlRepository,
 )
-
-from ecos_backend.db.models.reception_image import ReceptionImage
 
 
 class ReceptionImageAbstractReposity(AbstractRepository[ReceptionImage], abc.ABC):

@@ -31,5 +31,5 @@ class WorkSchedule(Base):
         from .reception_point import ReceptionPoint
 
     reception_point: Mapped["ReceptionPoint"] = relationship(
-        back_populates="work_schedule"
+        back_populates="work_schedules"
     )

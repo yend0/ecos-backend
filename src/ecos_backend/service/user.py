@@ -68,9 +68,9 @@ class UserService:
         async with self.uow:
             options: list = []
             if with_image:
-                options.append(selectinload(User.user_image))
+                options.append(selectinload(User.user_images))
 
-            options.append(selectinload(User.accural_history))
+            options.append(selectinload(User.accural_histories))
 
             user: User | None = await self.uow.user.get_by_id(
                 id=user_id, options=options
