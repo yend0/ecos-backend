@@ -2,9 +2,7 @@ import typing
 import uuid
 import re
 
-
-from typing import Annotated
-from datetime import date, datetime
+from datetime import datetime
 
 from pydantic import (
     BaseModel,
@@ -14,7 +12,6 @@ from pydantic import (
     Field,
     field_validator,
     model_validator,
-    StringConstraints,
 )
 
 from ecos_backend.api.v1.schemas.user_image import UserImageBaseSchema
@@ -87,10 +84,6 @@ class UserResponseSchema(UserBaseSchema):
     Attributes:
         id (uuid.UUID): Unique user identifier.
         email (EmailStr): User email address.
-        first_name (str | None): User's first name.
-        middle_name (str | None): User's middle name.
-        last_name (str | None): User's last name.
-        birth_date (date | None): User's birth date (YYYY-MM-DD).
         image_url (HttpUrl | None): URL to user's profile image.
         points (int): User's loyalty points.
         email_verified (bool): Is email verified.
@@ -100,22 +93,11 @@ class UserResponseSchema(UserBaseSchema):
         accural_history (list[AccrualHistoryBaseSchema]): User's accrual history.
 
     Methods:
-        full_name(self) -> str | None: Returns the full name of the user.
         set_image_url(cls, data: typing.Any) -> typing.Any: Sets the image URL based on the first image.
         set_points(cls, data: typing.Any) -> typing.Any: Sets the points based on the accrual history.
     """
 
     id: uuid.UUID = Field(..., description="Unique user identifier")
-    first_name: str | None = Field(
-        None, max_length=MAX_NAME_LENGTH, description="User's first name"
-    )
-    middle_name: str | None = Field(
-        None, max_length=MAX_NAME_LENGTH, description="User's middle name"
-    )
-    last_name: str | None = Field(
-        None, max_length=MAX_NAME_LENGTH, description="User's last name"
-    )
-    birth_date: date | None = Field(None, description="User's birth date (YYYY-MM-DD)")
     image_url: HttpUrl | None = Field(None, description="URL to user's profile image")
     points: int = Field(default=0, ge=0, description="User's loyalty points")
     email_verified: bool = Field(default=False, description="Is email verified")
@@ -130,14 +112,6 @@ class UserResponseSchema(UserBaseSchema):
     )
 
     model_config: ConfigDict = ConfigDict(from_attributes=True)
-
-    @property
-    def full_name(self) -> str | None:
-        if not any([self.first_name, self.middle_name, self.last_name]):
-            return None
-        return " ".join(
-            filter(None, [self.first_name, self.middle_name, self.last_name])
-        )
 
     @model_validator(mode="before")
     def set_image_url(cls, data: typing.Any) -> typing.Any:
@@ -160,41 +134,6 @@ class UserResponseSchema(UserBaseSchema):
 class UserRequestUpdatePartialSchema(BaseModel):
     """
     Schema for partial user update requests.
-
-    Attributes:
-        first_name (str | None): User's first name.
-        middle_name (str | None): User's middle name.
-        last_name (str | None): User's last name.
-        birth_date (date | None): User's birth date (YYYY-MM-DD).
-    Methods:
-        validate_birth_date(cls, v: date | None) -> date | None: Validates the birth date.
-        check_at_least_one_field(self) -> "UserRequestUpdatePartialSchema": Ensures at least one field is provided for update.
     """
 
-    first_name: Annotated[str, StringConstraints(max_length=MAX_NAME_LENGTH)] | None = (
-        Field(None, description="User's first name")
-    )
-    middle_name: (
-        Annotated[str, StringConstraints(max_length=MAX_NAME_LENGTH)] | None
-    ) = Field(None, description="User's middle name")
-    last_name: Annotated[str, StringConstraints(max_length=MAX_NAME_LENGTH)] | None = (
-        Field(None, description="User's last name")
-    )
-    birth_date: date | None = Field(None, description="User's birth date (YYYY-MM-DD)")
-
     model_config: ConfigDict = ConfigDict(extra="forbid")
-
-    @field_validator("birth_date")
-    @classmethod
-    def validate_birth_date(cls, v: date | None) -> date | None:
-        if v is not None and v > date.today():
-            raise ValueError("Birth date cannot be in the future")
-        return v
-
-    @model_validator(mode="after")
-    def check_at_least_one_field(self) -> "UserRequestUpdatePartialSchema":
-        if not any(
-            [self.first_name, self.middle_name, self.last_name, self.birth_date]
-        ):
-            raise ValueError("At least one field must be provided for update")
-        return self

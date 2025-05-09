@@ -59,7 +59,14 @@ class ReceptionPointReposity(
             func.ST_MakePoint(user_lon, user_lat), 4326
         )
 
-        stmt = select(self._model_cls)
+        ReceptionPoint = self._model_cls
+        stmt = select(ReceptionPoint).distinct()
+
+        waste_type_id = None
+        if filters and "waste_type" in filters:
+            waste_type_id = filters.pop("waste_type")
+            stmt = stmt.join(ReceptionPoint.wastes)
+            stmt = stmt.where(Waste.id == waste_type_id)
 
         if filters:
             where_clauses: list = []
