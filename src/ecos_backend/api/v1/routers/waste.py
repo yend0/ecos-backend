@@ -1,16 +1,17 @@
 import typing
 import uuid
 
-from fastapi import APIRouter, Path, status
+from fastapi import APIRouter, Header, Path, status
 
 from starlette.requests import ClientDisconnect
 
 from streaming_form_data.validators import ValidationError
 
-from ecos_backend.common import validation
+from ecos_backend.common import enums, validation
 from ecos_backend.common import exception as custom_exceptions
 
 from ecos_backend.api.v1 import annotations
+from ecos_backend.api.v1.schemas.base import BaseInforamtionResponse
 from ecos_backend.api.v1.schemas.waste import (
     WasteRequestCreateSchema,
     WasteResponseSchema,
@@ -24,7 +25,7 @@ router = APIRouter()
     "",
     summary="Create waste",
     response_description="Waste created successfully",
-    response_model=WasteResponseSchema,
+    response_model=BaseInforamtionResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_waste(
@@ -37,13 +38,19 @@ async def create_waste(
 
         waste_schema_request = WasteRequestCreateSchema(**data)
 
-        waste: Waste = await waste_service.add_waste(
-            waste=Waste(**waste_schema_request.model_dump()),
+        await waste_service.add_waste(
+            waste=Waste(
+                **waste_schema_request.model_dump(exclude={"waste_translations"})
+            ),
+            waste_translations=waste_schema_request.waste_translations,
             file=uploaded_files[0][1],
             file_extension=uploaded_files[0][2],
         )
 
-        return waste
+        return BaseInforamtionResponse(
+            message="Waste created successfully",
+            status=enums.Status.SUCCESS,
+        )
     except ClientDisconnect:
         pass
     except validation.MaxBodySizeException as e:
@@ -66,9 +73,11 @@ async def create_waste(
 )
 async def get_wastes(
     waste_service: annotations.waste_service,
-    search_filter: annotations.search_filter = None,
+    language_code=Header(default="ru", alias="Accept-Language"),
 ) -> typing.Any:
-    waste_list: list[Waste] = await waste_service.get_wastes(filters=search_filter)
+    waste_list: list[Waste] = await waste_service.get_wastes(
+        language_code=language_code
+    )
     return waste_list
 
 

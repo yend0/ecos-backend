@@ -2,7 +2,7 @@ FROM python:3.12-alpine AS builder
 
 RUN apk add --no-cache --virtual build-deps gcc musl-dev python3-dev \
     && apk add postgresql-dev \
-    && pip install --no-cache-dir alembic asyncpg pydantic[email] pydantic-settings jinja2 \
+    && pip install --no-cache-dir alembic asyncpg geoalchemy2[shapely] pydantic[email] pydantic-settings jinja2 \
     && apk del build-deps
 
 FROM python:3.12-alpine

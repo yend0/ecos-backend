@@ -17,6 +17,7 @@ from streaming_form_data.targets import ValueTarget
 
 from ecos_backend.api.v1.schemas.reception_point import ReceptionPointResponseSchema
 from ecos_backend.api.v1.schemas.waste import WasteResponseSchema
+
 from ecos_backend.db import s3_storage
 from ecos_backend.db import database
 
@@ -32,10 +33,12 @@ from ecos_backend.common.keycloak_adapters import (
 
 from ecos_backend.db.models.reception_point import ReceptionPoint
 from ecos_backend.db.models.waste import Waste
+from ecos_backend.db.models.waste_translation import WasteTranslation
+
 from ecos_backend.service.user import UserService
 from ecos_backend.service.reception_point import ReceptionPointService
 from ecos_backend.service.waste import WasteService
-from ecos_backend.service.moderation import ModerationService
+from ecos_backend.service.waste_translation import WasteTranslationService
 
 MAX_FILE_SIZE = 1024 * 1024 * 10  # 10MB
 MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 10 + 1024
@@ -81,10 +84,11 @@ async def get_waste_service(
     return WasteService(uow=uow, s3_storage=s3)
 
 
-async def get_moderation_service(
+async def get_waste_translation_service(
     uow: typing.Annotated[AbstractUnitOfWork, Depends(get_uow)],
+    s3: typing.Annotated[s3_storage.Boto3DAO, Depends(s3_client)],
 ) -> UserService:
-    return ModerationService(uow=uow)
+    return WasteTranslationService(uow=uow, s3_storage=s3)
 
 
 async def verify_token(
@@ -186,3 +190,23 @@ async def waste_by_id(
         )
 
     return waste
+
+
+async def waste_translation_by_id(
+    waste_translation_id: typing.Annotated[uuid.UUID, Path],
+    waste_translation_service: typing.Annotated[
+        WasteTranslationService, Depends(get_waste_translation_service)
+    ],
+) -> WasteResponseSchema:
+    waste_translation: (
+        WasteTranslation | None
+    ) = await waste_translation_service.get_waste_translation_by_id(
+        waste_translation_id
+    )
+
+    if waste_translation is None:
+        raise custom_exceptions.NotFoundException(
+            detail=f"Waste translation with {waste_translation_id} id not found."
+        )
+
+    return waste_translation

@@ -10,7 +10,6 @@ from ecos_backend.common import exception as exc
 from ecos_backend.common import enums
 
 from ecos_backend.db.models.accrual_history import AccrualHistory
-from ecos_backend.db.models.moderation import Moderation
 from ecos_backend.db.models.reception_image import ReceptionImage
 from ecos_backend.db.models.reception_point import ReceptionPoint
 from ecos_backend.db.models.work_schedule import WorkSchedule
@@ -25,8 +24,10 @@ class ReceptionPointService:
 
     async def add_reception_point(
         self,
+        user_id: uuid.UUID,
         reception_point: ReceptionPoint,
         work_schedule: list,
+        waste_ids: list[uuid.UUID],
         uploaded_files: list[tuple[str, bytes, str]],  # (filename, content, extension)
     ) -> ReceptionPoint:
         """Add new reception point with uploaded images."""
@@ -63,6 +64,16 @@ class ReceptionPointService:
                         filename=filename,
                     )
                     await self.uow.reception_image.add(reception_image)
+
+                # 5. Save waste types
+                for waste_id in waste_ids:
+                    await self.uow.reception_point.add_waste_type(
+                        reception_point_id=reception_point.id, waste_id=waste_id
+                    )
+
+                await self.uow.reception_point.add_user(
+                    reception_point_id=reception_point.id, user_id=user_id
+                )
 
                 await self.uow.commit()
                 return reception_point
@@ -115,6 +126,8 @@ class ReceptionPointService:
     async def get_reception_points(
         self,
         filters: dict | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
         page: int = 1,
         per_page: int = 10,
     ) -> list[ReceptionPoint]:
@@ -122,17 +135,35 @@ class ReceptionPointService:
         async with self.uow:
             try:
                 options: list = []
-                options.append(selectinload(ReceptionPoint.work_schedule))
-                options.append(selectinload(ReceptionPoint.reception_image))
-                options.append(selectinload(ReceptionPoint.waste))
+                options.append(selectinload(ReceptionPoint.work_schedules))
+                options.append(selectinload(ReceptionPoint.reception_images))
+                options.append(selectinload(ReceptionPoint.wastes))
 
-                points: list[ReceptionPoint] = await self.uow.reception_point.get_all(
-                    filters=filters,
-                    options=options,
-                    limit=per_page,
-                    offset=(page - 1) * per_page,
-                )
+                radius = filters.pop("radius", None)
 
+                if (
+                    radius is not None
+                    and latitude is not None
+                    and longitude is not None
+                ):
+                    points = await self.uow.reception_point.get_nearby_points(
+                        user_lat=latitude,
+                        user_lon=longitude,
+                        radius_meters=radius,
+                        filters=filters,
+                        page=page,
+                        per_page=per_page,
+                        options=options,
+                    )
+                else:
+                    points: list[
+                        ReceptionPoint
+                    ] = await self.uow.reception_point.get_all(
+                        filters=filters,
+                        options=options,
+                        limit=per_page,
+                        offset=(page - 1) * per_page,
+                    )
                 return points
             except Exception as e:
                 raise exc.InternalServerException(
@@ -144,9 +175,10 @@ class ReceptionPointService:
         async with self.uow:
             try:
                 options: list = []
-                options.append(selectinload(ReceptionPoint.work_schedule))
-                options.append(selectinload(ReceptionPoint.reception_image))
-                options.append(selectinload(ReceptionPoint.waste))
+                options.append(selectinload(ReceptionPoint.work_schedules))
+                options.append(selectinload(ReceptionPoint.reception_images))
+                options.append(selectinload(ReceptionPoint.wastes))
+                options.append(selectinload(ReceptionPoint.users))
 
                 point: ReceptionPoint | None = await self.uow.reception_point.get_by_id(
                     id=id, options=options
@@ -167,9 +199,9 @@ class ReceptionPointService:
                     raise exc.NotFoundException(detail="Reception point not found")
 
                 # Delete associated images
-                if len(point.reception_image) > 0:
+                if len(point.reception_images) > 0:
                     await self._delete_images(
-                        point.id, [img.filename for img in point.reception_image]
+                        point.id, [img.filename for img in point.reception_images]
                     )
 
                 # Delete main record
@@ -188,20 +220,12 @@ class ReceptionPointService:
         self,
         reception_point: ReceptionPoint,
         status: enums.PointStatus,
-        comment: str,
         user_id: uuid.UUID,
     ) -> ReceptionPoint:
-        """Update reception point status with moderation history."""
+        """Update reception point status"""
         async with self.uow:
             try:
                 reception_point.status = status
-
-                # Create moderation record
-                moderation = Moderation(
-                    comment=comment,
-                    reception_point_id=reception_point.id,
-                    user_id=user_id,
-                )
 
                 # # Create accrual history
                 points = 0 if status == enums.PointStatus.REJECTED else 10
@@ -212,7 +236,6 @@ class ReceptionPointService:
                     reward=enums.RewardType.RECYCLE_POINT_ADD,
                 )
 
-                await self.uow.moderation.add(moderation)
                 await self.uow.accrual_history.add(accrual)
                 await self.uow.reception_point.add(reception_point)
                 await self.uow.commit()

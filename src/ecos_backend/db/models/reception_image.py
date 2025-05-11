@@ -24,5 +24,5 @@ class ReceptionImage(Base):
         from .reception_point import ReceptionPoint
 
     reception_point: Mapped["ReceptionPoint"] = relationship(
-        back_populates="reception_image"
+        back_populates="reception_images"
     )

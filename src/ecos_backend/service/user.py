@@ -1,3 +1,4 @@
+from ast import Load
 import dataclasses
 import hashlib
 import random
@@ -7,7 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from keycloak import KeycloakAdmin, KeycloakPostError, KeycloakPutError
 
-from ecos_backend.common import config
+from ecos_backend.common import config, enums
 from ecos_backend.common.unit_of_work import AbstractUnitOfWork
 from ecos_backend.common.exception import (
     ConflictException,
@@ -15,6 +16,7 @@ from ecos_backend.common.exception import (
     NotFoundException,
     BadRequestException,
 )
+from ecos_backend.db.models.user_achievement import UserAchievement
 from ecos_backend.service.email import EmailService
 from ecos_backend.db.models.user import User
 from ecos_backend.db.models.user_image import UserImage
@@ -68,11 +70,12 @@ class UserService:
         async with self.uow:
             options: list = []
             if with_image:
-                options.append(selectinload(User.user_image))
+                options.append(selectinload(User.user_images))
 
-            options.append(selectinload(User.accural_history))
+            options.append(selectinload(User.accural_histories))
+            options.append(selectinload(User.achievements))
 
-            user: User | None = await self.uow.user.get_by_id(
+            user: User | None = await self._check_and_grant_achievements(
                 id=user_id, options=options
             )
             return user
@@ -231,3 +234,47 @@ class UserService:
         token: bytes = random.randbytes(32)
         hashed_code: hashlib.HASH = hashlib.sha256(token)
         return hashed_code.hexdigest(), token.hex()
+
+    async def _check_and_grant_achievements(
+        self, id: uuid.UUID, *, options: list[Load] | None = None
+    ) -> None:
+        async with self.uow:
+            try:
+                user: User | None = await self.uow.user.get_by_id(
+                    id=id, options=options
+                )
+
+                # Сколько всего вкладов
+                total_contributions: int = user.accural_histories.__len__()
+
+                # Получаем достижения пользователя
+                existing_achievements: set = {
+                    achievement.achievement_type for achievement in user.achievements
+                }
+
+                thresholds = [
+                    (1, enums.AchievementType.FIRST_CONTRIBUTION),
+                    (5, enums.AchievementType.FIVE_CONTRIBUTIONS),
+                    (10, enums.AchievementType.TEN_CONTRIBUTIONS),
+                    (25, enums.AchievementType.ECO_CHAMPION),
+                    (50, enums.AchievementType.MAP_MAKER),
+                ]
+
+                for threshold, achievement_type in thresholds:
+                    if (
+                        total_contributions >= threshold
+                        and achievement_type not in existing_achievements
+                    ):
+                        user_achievement = UserAchievement(
+                            user_id=id, achievement_type=achievement_type
+                        )
+                        self.uow.user_achievement.add(user_achievement)
+                        user.achievements.append(user_achievement)
+
+                await self.uow.commit()
+                return user
+            except Exception as ex:
+                await self.uow.rollback()
+                raise InternalServerException(
+                    detail="Failed to grant achievements"
+                ) from ex

@@ -22,4 +22,4 @@ class UserImage(Base):
 
     if TYPE_CHECKING:
         from .user import User
-    user: Mapped["User"] = relationship(back_populates="user_image")
+    user: Mapped["User"] = relationship(back_populates="user_images")

@@ -1,7 +1,7 @@
 import typing
 import uuid
 
-from fastapi import APIRouter, Depends, Path, status
+from fastapi import APIRouter, Depends, Form, Path, status
 
 from starlette.requests import ClientDisconnect
 
@@ -43,9 +43,17 @@ async def create_reception_point(
         data_dict, uploaded_files = data
 
         data_schema = ReceptionPointRequestCreateSchema(**data_dict)
+
+        from geoalchemy2 import WKTElement
+
         model = ReceptionPoint(
-            user_id=uuid.UUID(sub),
-            **data_schema.model_dump(exclude={"work_schedule"}),
+            **data_schema.model_dump(
+                exclude={"work_schedules", "location", "waste_ids"}
+            ),
+            location=WKTElement(
+                f"POINT({data_schema.location.longitude} {data_schema.location.latitude})",
+                srid=4326,
+            ),
         )
 
         if not uploaded_files:
@@ -54,8 +62,10 @@ async def create_reception_point(
             )
 
         await reception_point_service.add_reception_point(
+            user_id=sub,
             reception_point=model,
-            work_schedule=data_schema.work_schedule,
+            work_schedule=data_schema.work_schedules,
+            waste_ids=data_schema.waste_ids,
             uploaded_files=uploaded_files,
         )
 
@@ -87,15 +97,18 @@ async def get_reception_points(
     filter: typing.Annotated[ReceptionPointFilterParams, Depends()],
     pagination: typing.Annotated[PaginationParams, Depends()],
     reception_point_service: annotations.reception_point_service,
+    latitude: typing.Annotated[float | None, Form()] = None,
+    longitude: typing.Annotated[float | None, Form()] = None,
 ) -> typing.Any:
     reception_points: list[
         ReceptionPoint
     ] = await reception_point_service.get_reception_points(
+        latitude=latitude,
+        longitude=longitude,
         filters=filter.model_dump(exclude_none=True),
         page=pagination.page,
         per_page=pagination.per_page,
     )
-
     return ReceptionPointListResponse(
         items=reception_points,
         total=len(reception_points),
@@ -185,9 +198,9 @@ async def delete_waste_from_reception_point(
 )
 async def update_reception_point_status(
     user_info: annotations.verify_token,
-    data: annotations.moderation_create_schema,
     reception_point_id: typing.Annotated[uuid.UUID, Path],
     reception_point_service: annotations.reception_point_service,
+    status: typing.Annotated[enums.PointStatus, Form()],
 ) -> typing.Any:
     reception_point: (
         ReceptionPoint | None
@@ -200,9 +213,8 @@ async def update_reception_point_status(
 
     await reception_point_service.update_status(
         reception_point=reception_point,
-        comment=data.comment,
-        status=data.status,
-        user_id=reception_point.user_id,
+        user_id=reception_point.users[0].id,
+        status=status,
     )
 
     return BaseInforamtionResponse(
