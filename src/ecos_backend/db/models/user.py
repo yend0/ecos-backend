@@ -29,10 +29,16 @@ class User(Base):
     if TYPE_CHECKING:
         from .accrual_history import AccrualHistory
         from .user_image import UserImage
-        from .moderation import Moderation
+        from .user_achievement import UserAchievement
         from .reception_point import ReceptionPoint
 
     user_images: Mapped[list["UserImage"]] = relationship(
+        back_populates="user",
+        cascade="all, delete",
+        passive_deletes=True,
+    )
+
+    achievements: Mapped[list["UserAchievement"]] = relationship(
         back_populates="user",
         cascade="all, delete",
         passive_deletes=True,
@@ -44,14 +50,6 @@ class User(Base):
         passive_deletes=True,
     )
 
-    moderations: Mapped[list["Moderation"]] = relationship(
-        back_populates="user",
-        cascade="all, delete",
-        passive_deletes=True,
-    )
-
     reception_points: Mapped[list["ReceptionPoint"]] = relationship(
-        back_populates="user",
-        cascade="all, delete",
-        passive_deletes=True,
+        back_populates="users", secondary="Reception_Point_Submission"
     )

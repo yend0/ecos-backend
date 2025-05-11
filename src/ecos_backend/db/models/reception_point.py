@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey, String, DateTime, func, text
+from sqlalchemy import Enum, String, DateTime, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from geoalchemy2 import Geography
@@ -33,23 +33,14 @@ class ReceptionPoint(Base):
         Enum(enums.PointStatus), default=enums.PointStatus.UNDER_MODERATION
     )
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("User.id", ondelete="CASCADE")
-    )
-
     if TYPE_CHECKING:
         from .user import User
-        from .moderation import Moderation
         from .reception_image import ReceptionImage
         from .work_schedule import WorkSchedule
         from .waste import Waste
 
-    user: Mapped["User"] = relationship(back_populates="reception_points")
-
-    moderations: Mapped[list["Moderation"]] = relationship(
-        back_populates="reception_point",
-        cascade="all, delete",
-        passive_deletes=True,
+    users: Mapped[list["User"]] = relationship(
+        back_populates="reception_points", secondary="Reception_Point_Submission"
     )
 
     reception_images: Mapped[list["ReceptionImage"]] = relationship(

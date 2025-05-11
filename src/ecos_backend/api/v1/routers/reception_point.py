@@ -47,8 +47,9 @@ async def create_reception_point(
         from geoalchemy2 import WKTElement
 
         model = ReceptionPoint(
-            user_id=uuid.UUID(sub),
-            **data_schema.model_dump(exclude={"work_schedules", "location"}),
+            **data_schema.model_dump(
+                exclude={"work_schedules", "location", "waste_ids"}
+            ),
             location=WKTElement(
                 f"POINT({data_schema.location.longitude} {data_schema.location.latitude})",
                 srid=4326,
@@ -61,8 +62,10 @@ async def create_reception_point(
             )
 
         await reception_point_service.add_reception_point(
+            user_id=sub,
             reception_point=model,
             work_schedule=data_schema.work_schedules,
+            waste_ids=data_schema.waste_ids,
             uploaded_files=uploaded_files,
         )
 
@@ -195,9 +198,9 @@ async def delete_waste_from_reception_point(
 )
 async def update_reception_point_status(
     user_info: annotations.verify_token,
-    data: annotations.moderation_create_schema,
     reception_point_id: typing.Annotated[uuid.UUID, Path],
     reception_point_service: annotations.reception_point_service,
+    status: typing.Annotated[enums.PointStatus, Form()],
 ) -> typing.Any:
     reception_point: (
         ReceptionPoint | None
@@ -210,9 +213,8 @@ async def update_reception_point_status(
 
     await reception_point_service.update_status(
         reception_point=reception_point,
-        comment=data.comment,
-        status=data.status,
-        user_id=reception_point.user_id,
+        user_id=reception_point.users[0].id,
+        status=status,
     )
 
     return BaseInforamtionResponse(

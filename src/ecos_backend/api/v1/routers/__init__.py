@@ -9,7 +9,6 @@ from ecos_backend.api.v1.routers import user
 from ecos_backend.api.v1.routers import reception_point
 from ecos_backend.api.v1.routers import waste
 from ecos_backend.api.v1.routers import waste_translation
-from ecos_backend.api.v1.routers import moderation
 
 
 class Tags(Enum):
@@ -17,7 +16,6 @@ class Tags(Enum):
     reception_point: str = "Reception point"
     waste: str = "Waste"
     waste_translation: str = "Waste translation"
-    moderation: str = "Moderation"
 
 
 root = APIRouter()
@@ -34,9 +32,6 @@ api_router_v1.include_router(
     waste_translation.router,
     prefix="/waste-translations",
     tags=[Tags.waste_translation],
-)
-api_router_v1.include_router(
-    moderation.router, prefix="/moderations", tags=[Tags.moderation]
 )
 
 root.include_router(api_router_v1)

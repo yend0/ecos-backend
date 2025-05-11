@@ -8,6 +8,7 @@ from geoalchemy2.functions import ST_DWithin
 
 from ecos_backend.db.models.reception_point import ReceptionPoint
 from ecos_backend.db.models.waste import Waste
+from ecos_backend.db.models.user import User
 
 from ecos_backend.common.interfaces.repository import (
     AbstractRepository,
@@ -25,6 +26,18 @@ class ReceptionPointAbstractReposity(AbstractRepository[ReceptionPoint], abc.ABC
     @abc.abstractmethod
     async def delete_waste_type(
         self, reception_point_id: uuid.UUID, waste_id: uuid.UUID
+    ) -> ReceptionPoint:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def add_user(
+        self, reception_point_id: uuid.UUID, user_id: uuid.UUID
+    ) -> ReceptionPoint:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    async def delete_user(
+        self, reception_point_id: uuid.UUID, user_id: uuid.UUID
     ) -> ReceptionPoint:
         raise NotImplementedError()
 
@@ -93,11 +106,13 @@ class ReceptionPointReposity(
     async def add_waste_type(
         self, reception_point_id: uuid.UUID, waste_id: uuid.UUID
     ) -> ReceptionPoint:
-        reception_point: ReceptionPoint | None = await self._session.get(
-            ReceptionPoint,
-            reception_point_id,
-            options=[selectinload(ReceptionPoint.wastes)],
+        stmt = (
+            select(ReceptionPoint)
+            .options(selectinload(ReceptionPoint.wastes))
+            .where(ReceptionPoint.id == reception_point_id)
         )
+        result = await self._session.execute(stmt)
+        reception_point = result.scalar_one_or_none()
 
         waste: Waste | None = await self._session.get(Waste, waste_id)
 
@@ -126,6 +141,44 @@ class ReceptionPointReposity(
 
         if waste in reception_point.wastes:
             reception_point.wastes.remove(waste)
+            await self._session.flush()
+
+        return reception_point
+
+    async def add_user(
+        self, reception_point_id: uuid.UUID, user_id: uuid.UUID
+    ) -> ReceptionPoint:
+        stmt = (
+            select(ReceptionPoint)
+            .options(selectinload(ReceptionPoint.users))
+            .where(ReceptionPoint.id == reception_point_id)
+        )
+        result = await self._session.execute(stmt)
+        reception_point = result.scalar_one_or_none()
+
+        user: User | None = await self._session.get(User, user_id)
+
+        reception_point.users.append(user)
+        await self._session.flush()
+
+        return reception_point
+
+    async def delete_user(
+        self, reception_point_id: uuid.UUID, user_id: uuid.UUID
+    ) -> ReceptionPoint:
+        reception_point: ReceptionPoint | None = await self._session.get(
+            ReceptionPoint,
+            reception_point_id,
+            options=[selectinload(ReceptionPoint.users)],
+        )
+
+        user: User | None = await self._session.get(User, user_id)
+
+        if not reception_point or not user:
+            raise ValueError("ReceptionPoint or User not found")
+
+        if user in reception_point.users:
+            reception_point.users.remove(user)
             await self._session.flush()
 
         return reception_point
