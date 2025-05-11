@@ -12,7 +12,8 @@ class UserAchievementBaseSchema(BaseModel):
 
     Attributes:
         id (uuid.UUID): Unique identifier for the image.
-        filename (str | None): Name of the image file.
+        awarded_at (datetime): Date and time when the achievement was awarded.
+        achievement_type (enums.AchievementType): Type of the achievement.
     """
 
     id: uuid.UUID = Field(..., description="Unique identifier for the image")
