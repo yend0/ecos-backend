@@ -40,8 +40,6 @@ from ecos_backend.service.reception_point import ReceptionPointService
 from ecos_backend.service.waste import WasteService
 from ecos_backend.service.waste_translation import WasteTranslationService
 
-from ecos_backend.service.moderation import ModerationService
-
 MAX_FILE_SIZE = 1024 * 1024 * 10  # 10MB
 MAX_REQUEST_BODY_SIZE = 1024 * 1024 * 10 + 1024
 
@@ -91,12 +89,6 @@ async def get_waste_translation_service(
     s3: typing.Annotated[s3_storage.Boto3DAO, Depends(s3_client)],
 ) -> UserService:
     return WasteTranslationService(uow=uow, s3_storage=s3)
-
-
-async def get_moderation_service(
-    uow: typing.Annotated[AbstractUnitOfWork, Depends(get_uow)],
-) -> UserService:
-    return ModerationService(uow=uow)
 
 
 async def verify_token(

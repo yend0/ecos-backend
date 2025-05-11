@@ -14,6 +14,7 @@ from pydantic import (
     model_validator,
 )
 
+from ecos_backend.api.v1.schemas.user_achievement import UserAchievementBaseSchema
 from ecos_backend.api.v1.schemas.user_image import UserImageBaseSchema
 from ecos_backend.api.v1.schemas.accrual_history import AccrualHistoryBaseSchema
 from ecos_backend.common import config
@@ -90,7 +91,8 @@ class UserResponseSchema(UserBaseSchema):
         created_at (datetime): User registration timestamp.
         updated_at (datetime): Last profile update timestamp.
         user_image (list[UserImageBaseSchema]): User's profile images.
-        accural_history (list[AccrualHistoryBaseSchema]): User's accrual history.
+        accural_histories (list[AccrualHistoryBaseSchema]): User's accrual history.
+        user_achievements (list[UserAchievementBaseSchema]): User's achievements.
 
     Methods:
         set_image_url(cls, data: typing.Any) -> typing.Any: Sets the image URL based on the first image.
@@ -109,6 +111,10 @@ class UserResponseSchema(UserBaseSchema):
     )
     accural_histories: list[AccrualHistoryBaseSchema] = Field(
         default_factory=list, description="User's accrual history"
+    )
+
+    achievements: list[UserAchievementBaseSchema] = Field(
+        default_factory=list, description="User's achievements"
     )
 
     model_config: ConfigDict = ConfigDict(from_attributes=True)

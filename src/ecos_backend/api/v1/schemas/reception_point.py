@@ -70,7 +70,6 @@ class ReceptionPointBaseSchema(BaseModel):
         name (str): Reception point name.
         address (str): Reception point address.
         description (str | None): Reception point description.
-        user_id (uuid.UUID): Owner user ID.
         status (enums.PointStatus): Reception point status.
         location (Location): Reception point location.
     """
@@ -88,7 +87,6 @@ class ReceptionPointBaseSchema(BaseModel):
         None, max_length=10000, description="Reception point description"
     )
     location: Location = Field(..., description="Reception point location")
-    user_id: uuid.UUID = Field(..., description="Owner user ID")
     status: enums.PointStatus = Field(
         enums.PointStatus.UNDER_MODERATION,
         description="Reception point status",
@@ -122,6 +120,9 @@ class ReceptionPointRequestCreateSchema(BaseModel):
     work_schedules: list[WorkScheduleRequestCreateSchema] = Field(
         default_factory=list, description="Reception point work schedule"
     )
+    waste_ids: list[uuid.UUID] = Field(
+        default_factory=list, description="List of accepted waste type IDs"
+    )
 
 
 class ReceptionPointResponseSchema(ReceptionPointBaseSchema):
@@ -133,7 +134,6 @@ class ReceptionPointResponseSchema(ReceptionPointBaseSchema):
         address (str): Reception point address.
         description (str | None): Reception point description.
         location (Location): Reception point location.
-        user_id (uuid.UUID): Owner user ID.
         status (enums.PointStatus): Reception point status.
         work_schedule (list[WorkScheduleResponseSchema]): Reception point work schedule.
         waste (list[WasteResponseBaseSchema]): Waste types.

@@ -5,11 +5,11 @@ from ecos_backend.db.repositories import (
     waste,
     waste_translation,
     work_schedule,
-    moderation,
     accrual_history,
     reception_point,
     reception_image,
     user_image,
+    user_achievement,
 )
 
 
@@ -21,8 +21,8 @@ class AbstractUnitOfWork(abc.ABC):
     user_image: user_image.UserImageAbstractReposity
     reception_point: reception_point.ReceptionPointAbstractReposity
     reception_image: reception_image.ReceptionImageAbstractReposity
-    moderation: moderation.ModerationAbstractReposity
     accrual_history: accrual_history.AccrualHistoryAbstractReposity
+    user_achievement: user_achievement.UserAchievementAbstractReposity
 
     @abc.abstractmethod
     async def __aenter__(self) -> "AbstractUnitOfWork":
